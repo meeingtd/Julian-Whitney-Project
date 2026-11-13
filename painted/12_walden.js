@@ -16,6 +16,9 @@ function pine(c,r,x,y,h,dark,snow){
     if(snow){c.fillStyle=snow;c.beginPath();c.moveTo(x-tw*.85,ty-th*.18);c.quadraticCurveTo(x,ty-th*.5,x+tw*.7,ty-th*.2);c.quadraticCurveTo(x,ty-th*.36,x-tw*.85,ty-th*.18);c.fill();}}
 }
 PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
+  /* Blender plates (blender/src/walden.py): each layer below draws its render once loaded; the painting is the fallback */
+  plates:{land:{C:[0.0, 0.5, 9.3],zr:-32,rect:[-56.1278, -22.8871, 56.1278, 23.8861],src:{far:"media/plates/walden/land_far.webp",shore:"media/plates/walden/land_shore.webp",ice:"media/plates/walden/land_ice.webp",near:"media/plates/walden/land_near.webp"}},
+    port:{C:[0.0, 0.45, 14.0],zr:-32,rect:[-37.4227, -36.9727, 37.4227, 37.8727],src:{far:"media/plates/walden/port_far.webp",shore:"media/plates/walden/port_shore.webp",ice:"media/plates/walden/port_ice.webp",near:"media/plates/walden/port_near.webp"}}},
   /* one light: the low sun behind the ridge, left of centre; everything casts long blue shadows toward camera right */
   air:{rgb:"178,168,200",k:.42,z0:-20},
   look(e,H){const d=H.sm(.3,1,e.lp),sp=e.P(-11,H.lerp(1.6,-.4,e.lp),-70);return{bloom:.26,sun:[sp[0]/e.W,sp[1]/e.H,"255,196,150",.22*(1-d*.7),.7],grade:`rgba(${H.lerp(255,120,d)|0},${H.lerp(180,130,d)|0},${H.lerp(150,190,d)|0},.22)`,vig:.38,grain:.05};},
@@ -34,12 +37,12 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
   },
   layers:[
     /* the far ridge, beyond the pond: hazy, violet, a fringe of pines along its top */
-    {z:-60,draw(c,e,r){const{P}=e,u=e.u(-60);
+    {z:-60,plate:"far",draw(c,e,r){const{P}=e,u=e.u(-60);
       c.fillStyle="#8b85a6";c.beginPath();let a=P(-80,-2,-60);c.moveTo(a[0],a[1]+u*4);for(let x=-80;x<=80;x+=1){const p=P(x,-.4+ridge(x,1)*.8,-60);c.lineTo(p[0],p[1]);}a=P(80,-2,-60);c.lineTo(a[0],a[1]+u*4);c.fill();
       for(let x=-80;x<=80;x+=.6){const p=P(x,-.4+ridge(x,1)*.8,-60);const h=u*(.6+r()*.7);c.fillStyle="rgba(110,104,136,.9)";c.beginPath();c.moveTo(p[0]-h*.22,p[1]+1);c.lineTo(p[0],p[1]-h);c.lineTo(p[0]+h*.22,p[1]+1);c.fill();}
     }},
     /* the shore: a snowy hill of pines and bare oaks, the beach below it, the road along the beach, the bathhouse */
-    {z:-32,draw(c,e,r){const{P}=e,u=e.u(-32),poly=PAINT.helpers.poly;
+    {z:-32,plate:"shore",draw(c,e,r){const{P}=e,u=e.u(-32),poly=PAINT.helpers.poly;
       const top=x=>-2+2.6+Math.max(0,ridge(x,3))*1.3+(Math.abs(x)>10?Math.min(3.4,(Math.abs(x)-10)*.16):0);
       /* the hillside: snow under the trees, shaded blue away from the sun */
       let q=c.createLinearGradient(0,P(0,2.5,-34)[1],0,P(0,-2,-31)[1]);q.addColorStop(0,"#b9b3c8");q.addColorStop(1,"#dcd6e2");c.fillStyle=q;
@@ -59,7 +62,7 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
       a=P(-70,-2,-30);const b=P(70,-2,-30);q=c.createLinearGradient(0,a[1]-u*.25,0,a[1]+u*.25);q.addColorStop(0,"rgba(150,150,180,0)");q.addColorStop(.5,"rgba(150,150,180,.35)");q.addColorStop(1,"rgba(150,150,180,0)");c.fillStyle=q;c.fillRect(Math.min(a[0],b[0]),a[1]-u*.25,Math.abs(b[0]-a[0]),u*.5);
     }},
     /* the ice: wind-packed snow over the pond, clear black ice in patches holding the sky, skate tracks, a pressure ridge */
-    {z:-6,draw(c,e,r){const{P}=e,poly=PAINT.helpers.poly;
+    {z:-6,plate:"ice",draw(c,e,r){const{P}=e,poly=PAINT.helpers.poly;
       const n0=P(-90,-2,SHORE),n1=P(-90,-2,3);
       let q=c.createLinearGradient(0,n0[1],0,n1[1]);q.addColorStop(0,"#e6d4d8");q.addColorStop(.25,"#d8d2e0");q.addColorStop(1,"#c9d2e2");c.fillStyle=q;
       poly(c,[P(-90,-2,SHORE),P(90,-2,SHORE),P(90,-2,3),P(-90,-2,3)]);c.fill();
@@ -76,7 +79,7 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
       for(let k=0;k<40;k++){const t=k/40,x=H0(t),z=lerp0(-29,1.5,t),p=P(x+(k%2?.12:-.12),-2,z),s=e.u(z)*.06;c.fillStyle="rgba(110,118,150,.4)";c.beginPath();c.ellipse(p[0],p[1],s*1.3,s*.45,0,0,7);c.fill();}
     }},
     /* near: a white pine bough hanging into the top left of the frame, snow on it, and the edge of a drift at our feet */
-    {z:1,draw(c,e,r){const{P}=e,u=e.u(1);
+    {z:1,plate:"near",draw(c,e,r){const{P}=e,u=e.u(1);
       const base=P(-6.4,4.6,1);c.strokeStyle="#1c2620";c.lineCap="round";
       const bough=(x,y,a,l,w,d)=>{if(d>3)return;const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;c.lineWidth=w;c.strokeStyle="#241d18";c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke();
         /* needles in bunches of five, long and soft, and snow resting on top */

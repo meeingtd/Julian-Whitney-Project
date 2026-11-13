@@ -1371,7 +1371,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     if(window.AIRPORT)AIRPORT.set(p/PRE);
     cutFX(s);legoFrame(s,q);
     const dk=window.DESK&&DESK.ready&&mode==="intro";cueEl.style.opacity=dk?1-smooth(.01,.05,uS):0;cueEl.textContent=mode!=="intro"?"Scroll":innerWidth<480?"Scroll or spin":small()?"Scroll, or spin the globe":"Scroll in, or spin the globe";deskLine.classList.toggle("on",!!dk&&uS<.06);
-    if(SOL()&&mode==="hub"){cueEl.style.opacity=solLive&&!solTurned?1:0;cueEl.textContent=canHover?"Scroll to travel, or choose a planet":innerWidth<480?"Swipe to travel":"Swipe to travel, or tap a planet";}
+    if(SOL()&&mode==="hub"){cueEl.style.opacity=solLive&&!solTurned?1:0;cueEl.textContent=canHover?(innerWidth<600?"Scroll to travel":"Scroll to travel, or choose a planet"):innerWidth<480?"Swipe to travel":"Swipe to travel, or tap a planet";}
     if(solA>0)bigname.style.opacity=(+bigname.style.opacity*(1-solA)).toFixed(3);
 
     /* Drum */

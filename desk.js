@@ -12,6 +12,8 @@ import {BokehPass} from "three/addons/postprocessing/BokehPass.js";
 import {UnrealBloomPass} from "three/addons/postprocessing/UnrealBloomPass.js";
 import {OutputPass} from "three/addons/postprocessing/OutputPass.js";
 import {ShaderPass} from "three/addons/postprocessing/ShaderPass.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {MeshoptDecoder} from "three/addons/libs/meshopt_decoder.module.js";
 try{await (async()=>{
 if(!document.documentElement.classList.contains("live")||!window.EARTH)return;
 /* Scale: 1 world unit = 286 mm, so one Lego stud pitch (8 mm) = U. Everything Lego shares this pitch. */
@@ -255,20 +257,24 @@ function lapDraw(t){const c=LAP.cv.getContext("2d"),ok=im=>im&&im.complete&&im.n
 const _lp=new THREE.Vector3();
 function lapPlace(dt,vis){LAP.scr.color.setRGB(.62,.62,.62);LAP.glowL.intensity=.55;}
 
-/* the desk lamp: matte black architect lamp on the left, its head just in frame */
+/* the desk lamp: matte black architect lamp on the left, its head just in frame. The model is made in Blender (blender/src/lamp.py) at these
+   same points; the code primitives below are only its fallback if assets/lamp.glb can't load. The bulb, the light, the beam and the dust are live here. */
 const BULB=new THREE.Vector3(-1.0,1.42,1.12);
+const LAMP=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync("assets/lamp.glb").then(g=>g.scene,e=>{console.warn("lamp model",e);return null;});
+if(LAMP){LAMP.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.name!=="shade_inner";o.receiveShadow=true;const mt=o.material;mt.envMapIntensity=.9;
+    if(mt.name==="lamp_enamel"){mt.emissive.setRGB(1,.62,.3);mt.emissiveIntensity=.3;}});scene.add(LAMP);}
 {const m=new THREE.MeshStandardMaterial({color:0x111111,roughness:.38,metalness:.75,envMapIntensity:.9}),add=o=>{o.castShadow=true;o.receiveShadow=true;scene.add(o);return o;};
   const rod=(a,b,r)=>{const d=b.clone().sub(a),c=add(new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),16),m));c.position.copy(a).add(b).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return c;};
   const base=new THREE.Vector3(-1.55,0,.05),elbow=new THREE.Vector3(-1.7,1.0,.5),head=new THREE.Vector3(-1.14,1.55,1.06);
-  add(new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,.045,48),m)).position.copy(base).setY(.0225);
+  if(!LAMP){add(new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,.045,48),m)).position.copy(base).setY(.0225);
   rod(base.clone().setY(.04),elbow,.012);rod(base.clone().setY(.04).add(new THREE.Vector3(.04,0,.02)),elbow.clone().add(new THREE.Vector3(.04,0,.02)),.008);
-  rod(elbow,head,.012);add(new THREE.Mesh(new THREE.SphereGeometry(.03,16,12),m)).position.copy(elbow);
+  rod(elbow,head,.012);add(new THREE.Mesh(new THREE.SphereGeometry(.03,16,12),m)).position.copy(elbow);}
   /* shade, pointed at the globe */
   const aim=GC.clone().add(new THREE.Vector3(.05,-.1,0)),dir=aim.clone().sub(BULB).normalize();
   const shade=new THREE.Group();shade.position.copy(BULB);shade.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),dir);scene.add(shade);
-  const outer=new THREE.Mesh(new THREE.CylinderGeometry(.045,.19,.24,64,1,true),new THREE.MeshStandardMaterial({color:0x111111,roughness:.35,metalness:.8,side:THREE.FrontSide}));outer.position.y=.02;outer.castShadow=true;shade.add(outer);
-  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.044,.188,.238,64,1,true),new THREE.MeshStandardMaterial({color:0xf2ece2,roughness:.6,emissive:new THREE.Color(1,.62,.3),emissiveIntensity:.3,side:THREE.BackSide}));inner.position.y=.02;shade.add(inner);
-  const cap=new THREE.Mesh(new THREE.SphereGeometry(.05,24,12,0,Math.PI*2,0,Math.PI/2),m);cap.position.y=.14;shade.add(cap);
+  const outer=new THREE.Mesh(new THREE.CylinderGeometry(.045,.19,.24,64,1,true),new THREE.MeshStandardMaterial({color:0x111111,roughness:.35,metalness:.8,side:THREE.FrontSide}));outer.position.y=.02;outer.castShadow=true;if(!LAMP)shade.add(outer);
+  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.044,.188,.238,64,1,true),new THREE.MeshStandardMaterial({color:0xf2ece2,roughness:.6,emissive:new THREE.Color(1,.62,.3),emissiveIntensity:.3,side:THREE.BackSide}));inner.position.y=.02;if(!LAMP)shade.add(inner);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.05,24,12,0,Math.PI*2,0,Math.PI/2),m);cap.position.y=.14;if(!LAMP)shade.add(cap);
   const bulb=new THREE.Mesh(new THREE.SphereGeometry(.045,32,16),new THREE.MeshBasicMaterial({color:new THREE.Color(7,5,3)}));bulb.position.y=-.03;shade.add(bulb);
   /* the light: warm 2700K, soft-edged, real shadows */
   const s=new THREE.SpotLight(0xffc48c,84,0,.62,.85,2);s.position.copy(BULB).addScaledVector(dir,.05);s.target.position.copy(aim);

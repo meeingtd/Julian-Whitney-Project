@@ -47,6 +47,8 @@ dev = src.replace("<!--PROGRESS-->", '<script src="progress.js"></script>').repl
 src = src.replace("<!--PROGRESS-->", "<script>\n" + (HERE / "progress.js").read_text() + "</script>")
 inline = re.sub(r'src="media/(\w+\.mp4)"', lambda m: f'src="{data_uri(m.group(1), "video/mp4")}"', src)
 inline = re.sub(r'(src|poster)="media/((?:stills|wfu)/[\w-]+\.jpg)"', lambda m: f'{m.group(1)}="{data_uri(m.group(2), "image/jpeg")}"', inline)
+inline = re.sub(r'"media/((?:plates)/[\w/-]+\.webp)"', lambda m: '"' + data_uri(m.group(1), "image/webp") + '"', inline)
+inline = re.sub(r'"assets/([\w-]+\.glb)"', lambda m: '"data:model/gltf-binary;base64,' + base64.b64encode((HERE / "assets" / m.group(1)).read_bytes()).decode() + '"', inline)
 inline = re.sub(r'src="media/(wfu/[\w-]+\.png)"', lambda m: f'src="{data_uri(m.group(1), "image/png")}"', inline)
 inline = inline.replace("<!--PRIVATE-->", "").replace("<!--/PRIVATE-->", "")
 (HERE / "projects.html").write_text(document(inline))

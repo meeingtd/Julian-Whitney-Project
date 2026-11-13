@@ -76,22 +76,35 @@ window.PAINT=(()=>{
       const m=document.getElementById("morph");m.parentNode.insertBefore(box,m);cv=document.createElement("canvas");cv.style.cssText="position:absolute;inset:0;width:100%;height:100%";box.appendChild(cv);g=cv.getContext("2d");t0=performance.now();};
     function size(){W=innerWidth;H2=innerHeight;dpr=Math.min(1.5,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H2*dpr);}
     /* bake one layer: its own bitmap with a margin, drawn through the projector at this moment */
+    /* Blender plates (blender/src/<scene>.py): a layer with a plate draws that render instead of its painting, once loaded. A plate set
+       (land: desktop, port: phones) says where its camera stood (C) and which world rectangle its images cover at depth zr; at a layer's own
+       depth the rectangle scales about C. Until a plate loads the layer paints as before, then the scene re-bakes. */
+    const PL={};
+    function plateKey(){return innerWidth>=innerHeight?"land":"port";}
+    function loadPlates(){const k=plateKey(),set=def.plates&&def.plates[k];if(!set||PL[k])return;PL[k]={};let n=0;const need=Object.keys(set.src).length;
+      for(const[lay,src]of Object.entries(set.src)){const im=new Image();im.decoding="async";im.onload=()=>{PL[k][lay]=im;if(++n===need)def._dirty=1;};im.onerror=()=>console.warn("plate",src);im.src=src;}}
+    function plate(L){const k=plateKey(),set=def.plates&&def.plates[k],im=L.plate&&PL[k]&&PL[k][L.plate];if(!im||Object.keys(PL[k]).length<Object.keys(set.src).length)return null;return{im,set};}
     function bake(L,proj){
       const m=.18,bw=Math.round(cv.width*(1+2*m)),bh=Math.round(cv.height*(1+2*m)),ox=cv.width*m,oy=cv.height*m;
       const bmp=document.createElement("canvas");bmp.width=bw;bmp.height=bh;const c=bmp.getContext("2d");c.lineCap="round";c.lineJoin="round";
       const P=(x,y,z)=>{const q=proj(x,y,z);return[q[0]*dpr+ox,q[1]*dpr+oy];};
       const env={W:bw,H:bh,dpr,ox,oy,P,u:(z)=>{const a=P(0,-2,z),b=P(1,-2,z);return Math.hypot(b[0]-a[0],b[1]-a[1]);}};
-      L.draw(c,env,rng(1+def.id.length*31+L.z*7|0));
+      const pt=plate(L);
+      if(pt){const{C,zr,rect}=pt.set,k=(C[2]-L.z)/(C[2]-zr),X=x=>C[0]+(x-C[0])*k,Y=y=>C[1]+(y-C[1])*k,a=P(X(rect[0]),Y(rect[3]),L.z),b=P(X(rect[2]),Y(rect[1]),L.z);
+        c.imageSmoothingQuality="high";c.drawImage(pt.im,a[0],a[1],b[0]-a[0],b[1]-a[1]);}
+      else L.draw(c,env,rng(1+def.id.length*31+L.z*7|0));
       /* material: every painted surface gets fine grain and broad mottling (only where the layer painted), so no fill reads flat */
-      {const m=def.tex??.5;if(m>0){const T=texTiles(c);c.globalCompositeOperation="source-atop";c.globalAlpha=m;
+      {const m=pt?0:def.tex??.5;if(m>0){const T=texTiles(c);c.globalCompositeOperation="source-atop";c.globalAlpha=m;
         c.fillStyle=T.mottle;c.save();c.scale(bw/900,bw/900);c.fillRect(0,0,900,bh*900/bw);c.restore();c.fillStyle=T.fine;c.fillRect(0,0,bw,bh);c.globalAlpha=1;c.globalCompositeOperation="source-over";}}
       /* aerial perspective: farther layers take on the scene's air colour (tints only what the layer painted) */
-      if(def.air&&L.z<(def.air.z0||0)){const z0=def.air.z0||0,zmin=Math.min(...def.layers.map(l=>l.z)),f=clamp((z0-L.z)/((z0-zmin)||1));
+      if(!pt&&def.air&&L.z<(def.air.z0||0)){const z0=def.air.z0||0,zmin=Math.min(...def.layers.map(l=>l.z)),f=clamp((z0-L.z)/((z0-zmin)||1));
         if(f>0){c.globalCompositeOperation="source-atop";const hg=c.createLinearGradient(0,0,0,bh);hg.addColorStop(0,`rgba(${def.air.rgb},${(def.air.k*f*1.15).toFixed(3)})`);hg.addColorStop(1,`rgba(${def.air.rgb},${(def.air.k*f*.75).toFixed(3)})`);c.fillStyle=hg;c.fillRect(0,0,bw,bh);c.globalCompositeOperation="source-over";}}
       const A=proj(0,-2,L.z),B=proj(1,-2,L.z);return{bmp,ox,oy,A,B};
     }
     function set(s,proj,cam){
       const [i0,i1,o0,o1]=def.win,a=sm(i0,i1,s)*(1-sm(o0,o1,s));
+      if(def.plates&&s>i0-.08&&s<o1+.02)loadPlates();
+      if(def._dirty){def._dirty=0;bakes=null;}
       if(a<=.002||!proj){if(box){box.style.display="none";if(bakes&&(s<i0-.02||s>o1+.02)){bakes=null;key="";}}return;}
       ensure();if(cv.width!==Math.round(innerWidth*Math.min(1.5,devicePixelRatio||1))||W!==innerWidth||H2!==innerHeight){size();bakes=null;}
       box.style.display="block";box.style.opacity=a.toFixed(3);

@@ -648,6 +648,8 @@ import {BokehPass} from "three/addons/postprocessing/BokehPass.js";
 import {UnrealBloomPass} from "three/addons/postprocessing/UnrealBloomPass.js";
 import {OutputPass} from "three/addons/postprocessing/OutputPass.js";
 import {ShaderPass} from "three/addons/postprocessing/ShaderPass.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {MeshoptDecoder} from "three/addons/libs/meshopt_decoder.module.js";
 try{await (async()=>{
 if(!document.documentElement.classList.contains("live")||!window.EARTH)return;
 /* Scale: 1 world unit = 286 mm, so one Lego stud pitch (8 mm) = U. Everything Lego shares this pitch. */
@@ -891,20 +893,24 @@ function lapDraw(t){const c=LAP.cv.getContext("2d"),ok=im=>im&&im.complete&&im.n
 const _lp=new THREE.Vector3();
 function lapPlace(dt,vis){LAP.scr.color.setRGB(.62,.62,.62);LAP.glowL.intensity=.55;}
 
-/* the desk lamp: matte black architect lamp on the left, its head just in frame */
+/* the desk lamp: matte black architect lamp on the left, its head just in frame. The model is made in Blender (blender/src/lamp.py) at these
+   same points; the code primitives below are only its fallback if assets/lamp.glb can't load. The bulb, the light, the beam and the dust are live here. */
 const BULB=new THREE.Vector3(-1.0,1.42,1.12);
+const LAMP=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync("assets/lamp.glb").then(g=>g.scene,e=>{console.warn("lamp model",e);return null;});
+if(LAMP){LAMP.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.name!=="shade_inner";o.receiveShadow=true;const mt=o.material;mt.envMapIntensity=.9;
+    if(mt.name==="lamp_enamel"){mt.emissive.setRGB(1,.62,.3);mt.emissiveIntensity=.3;}});scene.add(LAMP);}
 {const m=new THREE.MeshStandardMaterial({color:0x111111,roughness:.38,metalness:.75,envMapIntensity:.9}),add=o=>{o.castShadow=true;o.receiveShadow=true;scene.add(o);return o;};
   const rod=(a,b,r)=>{const d=b.clone().sub(a),c=add(new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),16),m));c.position.copy(a).add(b).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return c;};
   const base=new THREE.Vector3(-1.55,0,.05),elbow=new THREE.Vector3(-1.7,1.0,.5),head=new THREE.Vector3(-1.14,1.55,1.06);
-  add(new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,.045,48),m)).position.copy(base).setY(.0225);
+  if(!LAMP){add(new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,.045,48),m)).position.copy(base).setY(.0225);
   rod(base.clone().setY(.04),elbow,.012);rod(base.clone().setY(.04).add(new THREE.Vector3(.04,0,.02)),elbow.clone().add(new THREE.Vector3(.04,0,.02)),.008);
-  rod(elbow,head,.012);add(new THREE.Mesh(new THREE.SphereGeometry(.03,16,12),m)).position.copy(elbow);
+  rod(elbow,head,.012);add(new THREE.Mesh(new THREE.SphereGeometry(.03,16,12),m)).position.copy(elbow);}
   /* shade, pointed at the globe */
   const aim=GC.clone().add(new THREE.Vector3(.05,-.1,0)),dir=aim.clone().sub(BULB).normalize();
   const shade=new THREE.Group();shade.position.copy(BULB);shade.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),dir);scene.add(shade);
-  const outer=new THREE.Mesh(new THREE.CylinderGeometry(.045,.19,.24,64,1,true),new THREE.MeshStandardMaterial({color:0x111111,roughness:.35,metalness:.8,side:THREE.FrontSide}));outer.position.y=.02;outer.castShadow=true;shade.add(outer);
-  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.044,.188,.238,64,1,true),new THREE.MeshStandardMaterial({color:0xf2ece2,roughness:.6,emissive:new THREE.Color(1,.62,.3),emissiveIntensity:.3,side:THREE.BackSide}));inner.position.y=.02;shade.add(inner);
-  const cap=new THREE.Mesh(new THREE.SphereGeometry(.05,24,12,0,Math.PI*2,0,Math.PI/2),m);cap.position.y=.14;shade.add(cap);
+  const outer=new THREE.Mesh(new THREE.CylinderGeometry(.045,.19,.24,64,1,true),new THREE.MeshStandardMaterial({color:0x111111,roughness:.35,metalness:.8,side:THREE.FrontSide}));outer.position.y=.02;outer.castShadow=true;if(!LAMP)shade.add(outer);
+  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.044,.188,.238,64,1,true),new THREE.MeshStandardMaterial({color:0xf2ece2,roughness:.6,emissive:new THREE.Color(1,.62,.3),emissiveIntensity:.3,side:THREE.BackSide}));inner.position.y=.02;if(!LAMP)shade.add(inner);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.05,24,12,0,Math.PI*2,0,Math.PI/2),m);cap.position.y=.14;if(!LAMP)shade.add(cap);
   const bulb=new THREE.Mesh(new THREE.SphereGeometry(.045,32,16),new THREE.MeshBasicMaterial({color:new THREE.Color(7,5,3)}));bulb.position.y=-.03;shade.add(bulb);
   /* the light: warm 2700K, soft-edged, real shadows */
   const s=new THREE.SpotLight(0xffc48c,84,0,.62,.85,2);s.position.copy(BULB).addScaledVector(dir,.05);s.target.position.copy(aim);
@@ -1404,22 +1410,35 @@ window.PAINT=(()=>{
       const m=document.getElementById("morph");m.parentNode.insertBefore(box,m);cv=document.createElement("canvas");cv.style.cssText="position:absolute;inset:0;width:100%;height:100%";box.appendChild(cv);g=cv.getContext("2d");t0=performance.now();};
     function size(){W=innerWidth;H2=innerHeight;dpr=Math.min(1.5,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H2*dpr);}
     /* bake one layer: its own bitmap with a margin, drawn through the projector at this moment */
+    /* Blender plates (blender/src/<scene>.py): a layer with a plate draws that render instead of its painting, once loaded. A plate set
+       (land: desktop, port: phones) says where its camera stood (C) and which world rectangle its images cover at depth zr; at a layer's own
+       depth the rectangle scales about C. Until a plate loads the layer paints as before, then the scene re-bakes. */
+    const PL={};
+    function plateKey(){return innerWidth>=innerHeight?"land":"port";}
+    function loadPlates(){const k=plateKey(),set=def.plates&&def.plates[k];if(!set||PL[k])return;PL[k]={};let n=0;const need=Object.keys(set.src).length;
+      for(const[lay,src]of Object.entries(set.src)){const im=new Image();im.decoding="async";im.onload=()=>{PL[k][lay]=im;if(++n===need)def._dirty=1;};im.onerror=()=>console.warn("plate",src);im.src=src;}}
+    function plate(L){const k=plateKey(),set=def.plates&&def.plates[k],im=L.plate&&PL[k]&&PL[k][L.plate];if(!im||Object.keys(PL[k]).length<Object.keys(set.src).length)return null;return{im,set};}
     function bake(L,proj){
       const m=.18,bw=Math.round(cv.width*(1+2*m)),bh=Math.round(cv.height*(1+2*m)),ox=cv.width*m,oy=cv.height*m;
       const bmp=document.createElement("canvas");bmp.width=bw;bmp.height=bh;const c=bmp.getContext("2d");c.lineCap="round";c.lineJoin="round";
       const P=(x,y,z)=>{const q=proj(x,y,z);return[q[0]*dpr+ox,q[1]*dpr+oy];};
       const env={W:bw,H:bh,dpr,ox,oy,P,u:(z)=>{const a=P(0,-2,z),b=P(1,-2,z);return Math.hypot(b[0]-a[0],b[1]-a[1]);}};
-      L.draw(c,env,rng(1+def.id.length*31+L.z*7|0));
+      const pt=plate(L);
+      if(pt){const{C,zr,rect}=pt.set,k=(C[2]-L.z)/(C[2]-zr),X=x=>C[0]+(x-C[0])*k,Y=y=>C[1]+(y-C[1])*k,a=P(X(rect[0]),Y(rect[3]),L.z),b=P(X(rect[2]),Y(rect[1]),L.z);
+        c.imageSmoothingQuality="high";c.drawImage(pt.im,a[0],a[1],b[0]-a[0],b[1]-a[1]);}
+      else L.draw(c,env,rng(1+def.id.length*31+L.z*7|0));
       /* material: every painted surface gets fine grain and broad mottling (only where the layer painted), so no fill reads flat */
-      {const m=def.tex??.5;if(m>0){const T=texTiles(c);c.globalCompositeOperation="source-atop";c.globalAlpha=m;
+      {const m=pt?0:def.tex??.5;if(m>0){const T=texTiles(c);c.globalCompositeOperation="source-atop";c.globalAlpha=m;
         c.fillStyle=T.mottle;c.save();c.scale(bw/900,bw/900);c.fillRect(0,0,900,bh*900/bw);c.restore();c.fillStyle=T.fine;c.fillRect(0,0,bw,bh);c.globalAlpha=1;c.globalCompositeOperation="source-over";}}
       /* aerial perspective: farther layers take on the scene's air colour (tints only what the layer painted) */
-      if(def.air&&L.z<(def.air.z0||0)){const z0=def.air.z0||0,zmin=Math.min(...def.layers.map(l=>l.z)),f=clamp((z0-L.z)/((z0-zmin)||1));
+      if(!pt&&def.air&&L.z<(def.air.z0||0)){const z0=def.air.z0||0,zmin=Math.min(...def.layers.map(l=>l.z)),f=clamp((z0-L.z)/((z0-zmin)||1));
         if(f>0){c.globalCompositeOperation="source-atop";const hg=c.createLinearGradient(0,0,0,bh);hg.addColorStop(0,`rgba(${def.air.rgb},${(def.air.k*f*1.15).toFixed(3)})`);hg.addColorStop(1,`rgba(${def.air.rgb},${(def.air.k*f*.75).toFixed(3)})`);c.fillStyle=hg;c.fillRect(0,0,bw,bh);c.globalCompositeOperation="source-over";}}
       const A=proj(0,-2,L.z),B=proj(1,-2,L.z);return{bmp,ox,oy,A,B};
     }
     function set(s,proj,cam){
       const [i0,i1,o0,o1]=def.win,a=sm(i0,i1,s)*(1-sm(o0,o1,s));
+      if(def.plates&&s>i0-.08&&s<o1+.02)loadPlates();
+      if(def._dirty){def._dirty=0;bakes=null;}
       if(a<=.002||!proj){if(box){box.style.display="none";if(bakes&&(s<i0-.02||s>o1+.02)){bakes=null;key="";}}return;}
       ensure();if(cv.width!==Math.round(innerWidth*Math.min(1.5,devicePixelRatio||1))||W!==innerWidth||H2!==innerHeight){size();bakes=null;}
       box.style.display="block";box.style.opacity=a.toFixed(3);
@@ -1492,6 +1511,9 @@ function pine(c,r,x,y,h,dark,snow){
     if(snow){c.fillStyle=snow;c.beginPath();c.moveTo(x-tw*.85,ty-th*.18);c.quadraticCurveTo(x,ty-th*.5,x+tw*.7,ty-th*.2);c.quadraticCurveTo(x,ty-th*.36,x-tw*.85,ty-th*.18);c.fill();}}
 }
 PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
+  /* Blender plates (blender/src/walden.py): each layer below draws its render once loaded; the painting is the fallback */
+  plates:{land:{C:[0.0, 0.5, 9.3],zr:-32,rect:[-56.1278, -22.8871, 56.1278, 23.8861],src:{far:"media/plates/walden/land_far.webp",shore:"media/plates/walden/land_shore.webp",ice:"media/plates/walden/land_ice.webp",near:"media/plates/walden/land_near.webp"}},
+    port:{C:[0.0, 0.45, 14.0],zr:-32,rect:[-37.4227, -36.9727, 37.4227, 37.8727],src:{far:"media/plates/walden/port_far.webp",shore:"media/plates/walden/port_shore.webp",ice:"media/plates/walden/port_ice.webp",near:"media/plates/walden/port_near.webp"}}},
   /* one light: the low sun behind the ridge, left of centre; everything casts long blue shadows toward camera right */
   air:{rgb:"178,168,200",k:.42,z0:-20},
   look(e,H){const d=H.sm(.3,1,e.lp),sp=e.P(-11,H.lerp(1.6,-.4,e.lp),-70);return{bloom:.26,sun:[sp[0]/e.W,sp[1]/e.H,"255,196,150",.22*(1-d*.7),.7],grade:`rgba(${H.lerp(255,120,d)|0},${H.lerp(180,130,d)|0},${H.lerp(150,190,d)|0},.22)`,vig:.38,grain:.05};},
@@ -1510,12 +1532,12 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
   },
   layers:[
     /* the far ridge, beyond the pond: hazy, violet, a fringe of pines along its top */
-    {z:-60,draw(c,e,r){const{P}=e,u=e.u(-60);
+    {z:-60,plate:"far",draw(c,e,r){const{P}=e,u=e.u(-60);
       c.fillStyle="#8b85a6";c.beginPath();let a=P(-80,-2,-60);c.moveTo(a[0],a[1]+u*4);for(let x=-80;x<=80;x+=1){const p=P(x,-.4+ridge(x,1)*.8,-60);c.lineTo(p[0],p[1]);}a=P(80,-2,-60);c.lineTo(a[0],a[1]+u*4);c.fill();
       for(let x=-80;x<=80;x+=.6){const p=P(x,-.4+ridge(x,1)*.8,-60);const h=u*(.6+r()*.7);c.fillStyle="rgba(110,104,136,.9)";c.beginPath();c.moveTo(p[0]-h*.22,p[1]+1);c.lineTo(p[0],p[1]-h);c.lineTo(p[0]+h*.22,p[1]+1);c.fill();}
     }},
     /* the shore: a snowy hill of pines and bare oaks, the beach below it, the road along the beach, the bathhouse */
-    {z:-32,draw(c,e,r){const{P}=e,u=e.u(-32),poly=PAINT.helpers.poly;
+    {z:-32,plate:"shore",draw(c,e,r){const{P}=e,u=e.u(-32),poly=PAINT.helpers.poly;
       const top=x=>-2+2.6+Math.max(0,ridge(x,3))*1.3+(Math.abs(x)>10?Math.min(3.4,(Math.abs(x)-10)*.16):0);
       /* the hillside: snow under the trees, shaded blue away from the sun */
       let q=c.createLinearGradient(0,P(0,2.5,-34)[1],0,P(0,-2,-31)[1]);q.addColorStop(0,"#b9b3c8");q.addColorStop(1,"#dcd6e2");c.fillStyle=q;
@@ -1535,7 +1557,7 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
       a=P(-70,-2,-30);const b=P(70,-2,-30);q=c.createLinearGradient(0,a[1]-u*.25,0,a[1]+u*.25);q.addColorStop(0,"rgba(150,150,180,0)");q.addColorStop(.5,"rgba(150,150,180,.35)");q.addColorStop(1,"rgba(150,150,180,0)");c.fillStyle=q;c.fillRect(Math.min(a[0],b[0]),a[1]-u*.25,Math.abs(b[0]-a[0]),u*.5);
     }},
     /* the ice: wind-packed snow over the pond, clear black ice in patches holding the sky, skate tracks, a pressure ridge */
-    {z:-6,draw(c,e,r){const{P}=e,poly=PAINT.helpers.poly;
+    {z:-6,plate:"ice",draw(c,e,r){const{P}=e,poly=PAINT.helpers.poly;
       const n0=P(-90,-2,SHORE),n1=P(-90,-2,3);
       let q=c.createLinearGradient(0,n0[1],0,n1[1]);q.addColorStop(0,"#e6d4d8");q.addColorStop(.25,"#d8d2e0");q.addColorStop(1,"#c9d2e2");c.fillStyle=q;
       poly(c,[P(-90,-2,SHORE),P(90,-2,SHORE),P(90,-2,3),P(-90,-2,3)]);c.fill();
@@ -1552,7 +1574,7 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
       for(let k=0;k<40;k++){const t=k/40,x=H0(t),z=lerp0(-29,1.5,t),p=P(x+(k%2?.12:-.12),-2,z),s=e.u(z)*.06;c.fillStyle="rgba(110,118,150,.4)";c.beginPath();c.ellipse(p[0],p[1],s*1.3,s*.45,0,0,7);c.fill();}
     }},
     /* near: a white pine bough hanging into the top left of the frame, snow on it, and the edge of a drift at our feet */
-    {z:1,draw(c,e,r){const{P}=e,u=e.u(1);
+    {z:1,plate:"near",draw(c,e,r){const{P}=e,u=e.u(1);
       const base=P(-6.4,4.6,1);c.strokeStyle="#1c2620";c.lineCap="round";
       const bough=(x,y,a,l,w,d)=>{if(d>3)return;const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;c.lineWidth=w;c.strokeStyle="#241d18";c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke();
         /* needles in bunches of five, long and soft, and snow resting on top */
@@ -6811,7 +6833,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     if(window.AIRPORT)AIRPORT.set(p/PRE);
     cutFX(s);legoFrame(s,q);
     const dk=window.DESK&&DESK.ready&&mode==="intro";cueEl.style.opacity=dk?1-smooth(.01,.05,uS):0;cueEl.textContent=mode!=="intro"?"Scroll":innerWidth<480?"Scroll or spin":small()?"Scroll, or spin the globe":"Scroll in, or spin the globe";deskLine.classList.toggle("on",!!dk&&uS<.06);
-    if(SOL()&&mode==="hub"){cueEl.style.opacity=solLive&&!solTurned?1:0;cueEl.textContent=canHover?"Scroll to travel, or choose a planet":innerWidth<480?"Swipe to travel":"Swipe to travel, or tap a planet";}
+    if(SOL()&&mode==="hub"){cueEl.style.opacity=solLive&&!solTurned?1:0;cueEl.textContent=canHover?(innerWidth<600?"Scroll to travel":"Scroll to travel, or choose a planet"):innerWidth<480?"Swipe to travel":"Swipe to travel, or tap a planet";}
     if(solA>0)bigname.style.opacity=(+bigname.style.opacity*(1-solA)).toFixed(3);
 
     /* Drum */
