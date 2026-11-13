@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Julian Whitney</title>
+<meta name="description" content="Julian Whitney: finance, FP&amp;A and AI-built tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a fixed 3D world behind a normal scrolling page. Each stop pins its card while the character waits, and the gaps between stops are the walks. Without 3D (body.flat) the cards are just a page. */
+:root{--bg:#0E1214;--panel:#161C1F;--ink:#E8ECEC;--ink2:#C2CCCD;--muted:#8F9D9F;--rule:#2B3538;--accent:#7CC0B6;--gold:#E8B86A;
+  --f-display:"Spectral",Georgia,"Times New Roman",serif;--f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);overflow-x:clip}
+a{color:var(--accent)}button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.mono{font:500 12px/1.35 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+body.flat #c{display:none}
+
+header{position:fixed;z-index:3;left:0;right:0;top:0;display:flex;align-items:center;gap:20px;padding:12px 20px;background:linear-gradient(rgba(14,18,20,.92),rgba(14,18,20,.6) 70%,transparent)}
+header b{font:600 18px/1 var(--f-display);white-space:nowrap}
+nav{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav ol{display:flex;gap:4px;margin:0;padding:0;list-style:none}
+nav a{display:block;padding:8px 10px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+nav a:hover{color:var(--ink)}nav a[aria-current=true]{color:var(--gold)}
+#plain{color:var(--muted);white-space:nowrap;min-height:32px}#plain:hover{color:var(--ink)}
+body.flat #plain{display:none}
+
+.stop{position:relative;z-index:2;height:150vh;padding:14vh 28px 0;display:flex;justify-content:flex-end;align-items:flex-start;pointer-events:none}
+.gap{height:70vh}
+.card{position:sticky;top:14vh;width:min(430px,100%);max-height:80vh;overflow:auto;pointer-events:auto;background:rgba(14,18,20,.88);border:1px solid var(--rule);padding:22px 24px;scrollbar-width:thin}
+.when{color:var(--gold)}
+.card h2{font:600 clamp(26px,3vw,34px)/1.12 var(--f-display);margin:6px 0 10px}
+.card p{margin:0 0 12px;color:var(--ink2)}.card p:last-child{margin-bottom:0}
+dl{margin:0 0 12px;display:grid;gap:8px}dt{font-weight:600;color:var(--ink)}dd{margin:0;color:var(--ink2);font-size:15px;line-height:1.45}
+.fine{font-size:13px;line-height:1.4;color:var(--muted)!important}
+.soon,.draft{font-size:14px;line-height:1.45;border-left:2px solid var(--gold);padding-left:10px;color:var(--ink)!important}
+.draft{color:var(--gold)!important}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.acts button,.acts a{border:1px solid var(--accent);color:var(--ink);padding:6px 12px;min-height:36px;font-size:14px;text-decoration:none}
+.acts button:hover,.acts a:hover{background:rgba(124,192,182,.15)}
+.hint{color:var(--muted)}
+code{font:500 15px var(--f-mono);color:var(--ink);overflow-wrap:anywhere}
+
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--rule);padding:14px;width:min(960px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+dialog video{width:100%;display:block;background:#000}
+dialog .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+dialog p{margin:10px 0 0;color:var(--ink2);font-size:14px}
+dialog button{min-height:32px}
+
+body.flat .stop{height:auto;display:block;padding:0 20px 18px}body.flat .gap{display:none}
+body.flat main{max-width:720px;margin:0 auto;padding-top:76px}
+body.flat .card{position:static;width:100%;max-height:none;overflow:visible;pointer-events:auto}
+
+@media(max-width:760px){
+  header{flex-wrap:wrap;gap:0 12px;padding:10px 12px 4px}nav{order:3;flex:0 0 100%}nav a{padding:6px 8px}
+  .stop{padding:50vh 12px 0;height:145vh;justify-content:center}
+  .card{top:50vh;max-height:calc(100vh - 92px);padding:14px 16px}
+  .card h2{font-size:24px}
+  .card p,dd{font-size:14px;line-height:1.42}
+  body.flat main{padding-top:92px}
+}
+</style></head><body class="flat">
+<canvas id="c" aria-hidden="true"></canvas>
+<header><b id="who"></b><nav aria-label="Stops"><ol id="navl"></ol></nav><button type="button" id="plain" class="mono">Plain version</button></header>
+<main id="main"></main>
+<dialog id="demo" aria-labelledby="demoT"><div class="top"><span id="demoT" class="mono"></span><button type="button" id="demoX" class="mono">Close ×</button></div><video controls playsinline muted preload="none"></video><p id="demoC"></p></dialog>
+<noscript><p style="padding:90px 20px">This page needs JavaScript. Email: julianwhitney@alumni.wfu.edu</p></noscript>
+<script src="world-content.js"></script>
+<script>
+/* Page first, so the words are there even if 3D never loads. */
+(()=>{
+  const W=window.WORLD,main=document.getElementById("main"),navl=document.getElementById("navl"),esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  document.getElementById("who").textContent=W.name;
+  W.stops.forEach((s,i)=>{
+    navl.insertAdjacentHTML("beforeend",`<li><a class="mono" href="#${s.id}">${esc(s.nav)}</a></li>`);
+    let h=`<span class="when mono">${esc(s.when)}</span><h${i?2:1} style="font:600 clamp(26px,3vw,34px)/1.12 var(--f-display);margin:6px 0 10px">${esc(s.title)}</h${i?2:1}><p>${esc(s.lede)}</p>`;
+    if(s.draft)h+=`<p class="draft">Draft wording, waiting on Julian's OK.</p>`;
+    if(s.terms)h+=`<dl>${s.terms.map(t=>`<div><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join("")}</dl>`;
+    if(s.soon)h+=`<p class="soon">${esc(s.soon)}</p>`;
+    if(s.demos)h+=`<div class="acts">${s.demos.map((d,n)=>`<button type="button" data-s="${i}" data-n="${n}">${esc(d.label)}</button>`).join("")}</div>`;
+    if(s.fine)h+=`<p class="fine" style="margin-top:12px">${esc(s.fine)}</p>`;
+    if(s.email)h+=`<p><code id="em">${esc(s.email)}</code></p><div class="acts"><button type="button" id="copy">Copy email</button><a href="mailto:${esc(s.email)}">Send email</a>${s.linkedin?`<a href="${esc(s.linkedin)}" rel="noopener">LinkedIn</a>`:""}</div>${s.linkedin?"":`<p class="draft" style="margin-top:12px">LinkedIn link needed.</p>`}<p class="fine" style="margin-top:12px">${esc(W.note)}</p>`;
+    if(s.hint)h+=`<p class="hint mono" id="hint">${esc(s.hint)} ↓</p>`;
+    main.insertAdjacentHTML("beforeend",`<section class="stop" id="${s.id}" aria-label="${esc(s.nav)}"><article class="card">${h}</article></section>`+(i<W.stops.length-1?`<div class="gap" aria-hidden="true"></div>`:""));
+  });
+  const dlg=document.getElementById("demo"),vid=dlg.querySelector("video");
+  main.addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){const d=W.stops[+b.dataset.s].demos[+b.dataset.n];document.getElementById("demoT").textContent=d.label;document.getElementById("demoC").textContent=d.cap;vid.src=d.src;dlg.showModal();vid.play().catch(()=>{});}
+    if(e.target.id==="copy"){navigator.clipboard&&navigator.clipboard.writeText(document.getElementById("em").textContent).then(()=>{e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy email",1400);});}});
+  document.getElementById("demoX").addEventListener("click",()=>dlg.close());
+  dlg.addEventListener("close",()=>{vid.pause();vid.removeAttribute("src");vid.load();});
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+<script src="world.js"></script>
+</body></html>

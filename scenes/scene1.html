@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Virtual Resume Scene 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a short painted silhouette film on one canvas, with one clock shared by autoplay and scrolling. */
+:root{--bg:#0E1214;--ink:#E8ECEC;--accent:#D9A866;--f-display:"Spectral",Georgia,serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}html{scrollbar-width:none;background:var(--bg)}html::-webkit-scrollbar{display:none}
+body{margin:0;background:var(--bg);color:var(--ink)}
+button{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer}button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.mono{font:500 12px/1.35 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}#track{height:500vh}
+#tag{position:fixed;left:20px;top:18px;color:var(--ink)}
+#label{position:fixed;left:20px;top:48px;display:flex;flex-direction:column;gap:3px;opacity:0}
+#labelT{font:600 clamp(26px,3.6vw,46px)/1.1 var(--f-display)}#labelS{color:var(--accent)}
+#cap{position:fixed;left:20px;right:20px;bottom:58px;font:500 clamp(20px,2.6vw,32px)/1.3 var(--f-display);max-width:860px;opacity:0;text-wrap:balance;text-shadow:0 1px 14px rgba(0,0,0,.9)}
+#ctl{position:fixed;left:20px;right:20px;bottom:18px;display:flex;align-items:center;gap:16px}#ctl button{min-width:64px;min-height:30px;text-align:left}
+#bar{flex:1;height:2px;background:rgba(255,255,255,.22)}#fill{height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+#end{position:fixed;inset:0;display:none;flex-direction:column;gap:16px;align-items:center;justify-content:center;background:var(--bg);text-align:center}
+#end h2{font:600 clamp(28px,5vw,52px)/1.1 var(--f-display);margin:0}#again{border:1px solid var(--accent);padding:10px 20px}
+</style></head><body>
+<canvas id="c" role="img" aria-label="Julian walks out of a lit doorway in Concord to Walden Pond at dawn, passes Thoreau fishing, introduces himself, and rides off with Paul Revere."></canvas><div id="track" aria-hidden="true"></div>
+<div id="tag" class="mono">Virtual Resume · Scene 1</div>
+<div id="label"><span id="labelT"></span><span id="labelS" class="mono"></span></div>
+<div id="cap"></div>
+<div id="ctl"><button type="button" id="pp">Pause</button><div id="bar"><div id="fill"></div></div></div>
+<div id="end"><span class="mono">Virtual Resume</span><h2>End of Scene 1</h2><button type="button" id="again">Watch again</button></div>
+<script>
+const LINE="Hi, I'm Julian. Welcome to my portfolio. This is a little bit about me and where I've been.",T=15.5;
+const cv=document.getElementById("c"),g=cv.getContext("2d");let W=0,H=0,U=1,VW=160;
+const size=()=>{const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;g.setTransform(d,0,0,d,0,0);U=H/100;VW=W/U;};addEventListener("resize",size);size();
+const sm=(a,b,t)=>{t=Math.min(1,Math.max(0,(t-a)/(b-a)));return t*t*(3-2*t);},mix=(a,b,t)=>a+(b-a)*t;
+const lerpC=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(mix(v,b[i],t))).join(",")})`;
+const noise=x=>Math.sin(x*.13)*2.2+Math.sin(x*.31+1.7)*1.3+Math.sin(x*.71+.4)*.7;
+const hash=n=>{const s=Math.sin(n*127.1)*43758.5;return s-Math.floor(s);};
+const GROUND=74,INK="#0A0E11";
+
+/* A tapered limb with round ends. */
+function limb(ax,ay,bx,by,wa,wb){const d=Math.atan2(by-ay,bx-ax),n=d+Math.PI/2;g.beginPath();g.arc(ax,ay,wa,n,n+Math.PI);g.arc(bx,by,wb,n+Math.PI,n);g.closePath();g.fill();}
+/* A person in profile facing right, about 7.5 heads tall, drawn from a skeleton. Origin at the feet. */
+function person(x,y,h,p){
+  const s=h/7.5;g.save();g.translate(x,y);g.scale(s,s);g.fillStyle=p.ink||INK;
+  const lean=p.lean||0,hipY=-3.95,hx=0,leg=(a,k,w)=>{const kx=hx+Math.sin(a)*1.98,ky=hipY+Math.cos(a)*1.98,b=a-k,ax=kx+Math.sin(b)*1.92,ay=ky+Math.cos(b)*1.92;limb(hx,hipY,kx,ky,.47*w,.27*w);limb(kx,ky,ax,ay,.27*w,.15*w);
+    g.beginPath();g.moveTo(ax-.2,ay-.15);g.lineTo(ax+.2,ay-.2);g.quadraticCurveTo(ax+.85,ay+.02,ax+.85,ay+.17);g.lineTo(ax-.26,ay+.17);g.closePath();g.fill();};
+  leg(p.b0,p.b1,.94);
+  const shX=Math.sin(lean)*2.2,shY=hipY-Math.cos(lean)*2.2,arm=(a,e,w)=>{const ex=shX+Math.sin(a)*1.45,ey=shY+Math.cos(a)*1.45,f=a+e,wx=ex+Math.sin(f)*1.32,wy=ey+Math.cos(f)*1.32;limb(shX,shY,ex,ey,.25*w,.18*w);limb(ex,ey,wx,wy,.18*w,.12*w);g.beginPath();g.ellipse(wx+Math.sin(f)*.2,wy+Math.cos(f)*.2,.16,.24,-f,0,7);g.fill();return[wx+Math.sin(f)*.4,wy+Math.cos(f)*.4,f];};
+  const rear=arm(p.r0,p.r1,.94);leg(p.f0,p.f1,1);
+  /* Jacket */
+  g.beginPath();g.moveTo(shX-.62,shY-.05);g.quadraticCurveTo(shX,shY-.32,shX+.5,shY-.08);g.quadraticCurveTo(shX+.68,shY+1.2,hx+.62,hipY+.55);g.lineTo(hx-.66,hipY+.55);g.quadraticCurveTo(shX-.7,shY+1.1,shX-.62,shY-.05);g.fill();
+  if(p.shirt){g.fillStyle="#E8ECEC";g.beginPath();g.moveTo(shX+.12,shY-.1);g.lineTo(shX+.47,shY-.03);g.lineTo(shX+.47,shY+.8);g.closePath();g.fill();g.fillStyle="#8A2B36";g.beginPath();g.moveTo(shX+.34,shY+.03);g.lineTo(shX+.46,shY+.03);g.lineTo(shX+.46,shY+.72);g.closePath();g.fill();g.fillStyle=p.ink||INK;}
+  /* Neck and head in profile, with brow, nose and chin. */
+  const nx=shX+.08,ny=shY-.2;limb(nx,ny,nx+.05,ny-.42,.21,.19);
+  const a=nx+.08+(p.tilt||0)*.2,b=ny-.98;g.save();g.translate(a,b);g.rotate(p.tilt||0);
+  g.beginPath();g.moveTo(-.45,.02);g.bezierCurveTo(-.5,-.62,.28,-.72,.42,-.28);g.lineTo(.45,-.1);g.lineTo(.58,.08);g.lineTo(.44,.14);g.quadraticCurveTo(.47,.3,.4,.36);g.quadraticCurveTo(.4,.56,.18,.56);g.quadraticCurveTo(-.2,.5,-.34,.3);g.closePath();g.fill();
+  if(p.curls){for(let i=0;i<34;i++){const an=-.15-hash(i)*3.3,r=.42+hash(i+40)*.22,q=.14+hash(i+90)*.1;g.beginPath();g.arc(-.05+Math.cos(an+Math.PI*.0)*r*(an<-1.6?1.04:.92),-.18+Math.sin(an)*r,q,0,7);g.fill();}}
+  if(p.brim){g.fillRect(-.82,-.56,1.6,.1);g.beginPath();g.moveTo(-.42,-.56);g.lineTo(-.34,-1);g.lineTo(.32,-1);g.lineTo(.4,-.56);g.fill();}
+  if(p.tricorn){g.beginPath();g.moveTo(-.85,-.34);g.quadraticCurveTo(0,-.72,.88,-.28);g.quadraticCurveTo(.3,-1.05,-.05,-1.02);g.quadraticCurveTo(-.5,-1,-.85,-.34);g.fill();}
+  if(p.beard){g.beginPath();g.moveTo(-.25,.28);g.quadraticCurveTo(.1,.95,.42,.32);g.fill();}
+  g.restore();
+  const hand=arm(p.a0,p.a1,1);
+  if(p.open)for(let i=-1.5;i<=1.5;i++){const d=hand[2]+i*.3;limb(hand[0]-Math.sin(hand[2])*.1,hand[1]-Math.cos(hand[2])*.1,hand[0]+Math.sin(d)*.42,hand[1]+Math.cos(d)*.42,.055,.035);}
+  if(p.keys!=null){g.strokeStyle=g.fillStyle="#E8C468";g.lineWidth=.045;const k=p.keys,ex=rear[0]+Math.sin(k)*.34,ey=rear[1]+Math.cos(k)*.34;g.beginPath();g.moveTo(rear[0],rear[1]);g.lineTo(ex,ey);g.stroke();g.beginPath();g.arc(ex,ey,.1,0,7);g.stroke();g.beginPath();g.moveTo(ex,ey+.08);g.lineTo(ex+Math.sin(k)*.36,ey+.08+Math.cos(k)*.36);g.lineWidth=.07;g.stroke();}
+  if(p.rod){g.strokeStyle=INK;g.lineWidth=.08;g.beginPath();g.moveTo(hand[0]-.5,hand[1]+.3);g.lineTo(hand[0]+5.6,hand[1]-3.7);g.stroke();g.lineWidth=.022;g.strokeStyle="rgba(232,236,236,.6)";g.beginPath();g.moveTo(hand[0]+5.6,hand[1]-3.7);g.lineTo(hand[0]+5.6,p.rod);g.stroke();g.beginPath();g.ellipse(hand[0]+5.6,p.rod,.5,.09,0,0,7);g.stroke();}
+  g.restore();
+  return{rear:[x+rear[0]*s,y+rear[1]*s]};
+}
+/* Walking pose from a stride phase. */
+const walk=ph=>{const a=Math.sin(ph)*.46,c=Math.cos(ph);return{f0:a,f1:Math.max(0,c)*.75+.05,b0:-a,b1:Math.max(0,-c)*.75+.05,a0:-a*.8,a1:.28,r0:a*.8,r1:.28,lean:.035};};
+/* A galloping horse in profile facing right; origin at ground beneath the belly, one unit is about a hand. */
+function horse(x,y,s,ph){g.save();g.translate(x,y+Math.abs(Math.sin(ph))*-.7*s/8);g.scale(s,s);g.fillStyle=INK;
+  const lg=(hx,hy,o,w)=>{const a=Math.sin(ph+o)*.7,kx=hx+Math.sin(a)*2.2,ky=hy+Math.cos(a)*2.2,b=a-Math.max(0,Math.cos(ph+o))*1.15-.1;const ax=kx+Math.sin(b)*2.5,ay=ky+Math.cos(b)*2.5;limb(hx,hy,kx,ky,.62*w,.26*w);limb(kx,ky,ax,ay,.22*w,.15*w);g.fillRect(ax-.23,ay-.05,.5,.3);};
+  lg(-3.4,-5.2,2.6,.9);lg(2.8,-5.1,4.2,.9);
+  g.beginPath();g.moveTo(-4.6,-7.3);g.bezierCurveTo(-3,-8.7,-.5,-7.9,1.6,-8.2);g.bezierCurveTo(2.6,-9.3,3.3,-10.8,4.4,-11.9);g.lineTo(4.6,-12.7);g.lineTo(5.1,-12);g.bezierCurveTo(5.8,-11.6,6.9,-10.6,7.4,-9.9);g.quadraticCurveTo(7.3,-9.3,6.6,-9.5);g.lineTo(5.3,-10.1);g.bezierCurveTo(4.7,-8.5,4.3,-6.8,3.3,-5.5);g.bezierCurveTo(1.2,-4.5,-1.3,-4.8,-2.7,-5);g.bezierCurveTo(-4.3,-4.8,-5.2,-5.8,-4.6,-7.3);g.fill();
+  /* Mane and tail stream back. */
+  g.beginPath();g.moveTo(4.3,-11.9);g.quadraticCurveTo(2.2,-11.6,1.4,-8.4);g.lineTo(2.6,-8.6);g.fill();
+  g.beginPath();g.moveTo(-4.5,-7.2);g.bezierCurveTo(-6.2,-7.4,-7.5,-6.2,-8.8,-5.8+Math.sin(ph)*.35);g.bezierCurveTo(-7.5,-5.3,-6,-5.4,-4.6,-6.2);g.fill();
+  lg(-3,-5.2,0,1);lg(3.1,-5.1,1.5,1);g.restore();}
+const seat={f0:1.25,f1:1.35,b0:1.1,b1:1.3,lean:.1};
+/* Lantern light. */
+function glow(x,y,r,a){const q=g.createRadialGradient(x,y,0,x,y,r);q.addColorStop(0,`rgba(255,214,140,${a})`);q.addColorStop(.18,`rgba(255,185,100,${a*.45})`);q.addColorStop(1,"rgba(255,170,80,0)");g.fillStyle=q;g.fillRect(x-r,y-r,r*2,r*2);}
+/* A ragged pine, drawn with slightly uneven boughs. */
+function pine(x,y,h,seed,col){g.fillStyle=col;g.beginPath();g.moveTo(x,y-h);const n=7;for(let i=1;i<=n;i++){const w=h*.05+h*.25*(i/n)*(.8+hash(seed+i)*.4),yy=y-h+h*.9*i/n;g.lineTo(x+w,yy);g.lineTo(x+w*.5,yy-h*.02);}for(let i=n;i>=1;i--){const w=h*.05+h*.25*(i/n)*(.8+hash(seed+i+20)*.4),yy=y-h+h*.9*i/n;g.lineTo(x-w*.5,yy-h*.02);g.lineTo(x-w,yy);}g.closePath();g.fill();g.fillRect(x-h*.02,y-h*.12,h*.04,h*.12);}
+
+const stopX=170;
+function frame(t){
+  g.setTransform(cv.width/W,0,0,cv.width/W,0,0);
+  const dawn=sm(2.6,8,t);
+  const pX=mix(40,stopX,Math.pow(Math.min(1,Math.max(0,(t-1)/5.6)),.95));
+  const lead=VW<80?.32:.34,cam=(pX-VW*lead)+ (t>10.8? (t-10.8)*0:0);
+  /* Sky */
+  const sky=g.createLinearGradient(0,0,0,GROUND*U);sky.addColorStop(0,"#0E1214");sky.addColorStop(.52,lerpC([20,28,36],[46,58,70],dawn));sky.addColorStop(.86,lerpC([34,42,52],[176,120,86],dawn));sky.addColorStop(1,lerpC([46,50,60],[232,172,112],dawn));g.fillStyle=sky;g.fillRect(0,0,W,H);
+  g.save();g.scale(U,U);
+  /* Sun */
+  const sx=stopX+VW*.28-cam*1;if(dawn>0){g.globalAlpha=dawn;glow(sx,GROUND-4,44,.55);g.fillStyle="#F6D2A0";g.beginPath();g.arc(sx,GROUND-3-dawn*5,5,0,7);g.fill();g.globalAlpha=1;}
+  /* Far ridge of trees */
+  const ridge=(par,base,hgt,col,seedB,step)=>{g.fillStyle=col;const off=cam*par;g.beginPath();g.moveTo(0,GROUND);for(let x=-2;x<=VW+2;x+=2)g.lineTo(x,base+Math.min(0,noise(x+off)*.8));g.lineTo(VW,GROUND);g.fill();const start=Math.floor((off-10)/step);for(let i=start;i<start+VW/step+6;i++){const wx=i*step+hash(i+seedB)*step*.7-off;pine(wx,base+1,hgt*(.65+hash(i*3+seedB)*.6),i+seedB,col);}};
+  ridge(.28,GROUND-5,17,lerpC([20,27,32],[92,84,84],dawn),11,5.5);
+  /* Old Concord: a steeple and clapboard roofs, left behind as the walk begins. */
+  {const ox=-cam*.5+58;g.fillStyle=lerpC([17,22,27],[70,64,66],dawn);g.fillRect(ox-30,GROUND-14,14,14);g.beginPath();g.moveTo(ox-32,GROUND-14);g.lineTo(ox-23,GROUND-21);g.lineTo(ox-14,GROUND-14);g.fill();g.fillRect(ox+18,GROUND-17,12,17);g.fillRect(ox+21.5,GROUND-27,5,10);g.beginPath();g.moveTo(ox+20.5,GROUND-27);g.lineTo(ox+24,GROUND-46);g.lineTo(ox+27.5,GROUND-27);g.fill();g.beginPath();g.moveTo(ox+16,GROUND-17);g.lineTo(ox+24,GROUND-24);g.lineTo(ox+32,GROUND-17);g.fill();}
+  ridge(.62,GROUND-1.5,27,lerpC([13,18,22],[44,46,50],dawn),37,9);
+  /* The building and its doorway of light, at x=40. */
+  const bx=40-cam,open=sm(.45,1,t);
+  if(bx>-70){g.fillStyle=INK;g.fillRect(bx-34,GROUND-44,68,44);g.fillStyle="rgba(255,226,170,.5)";for(const wx of[-27,-17,9,19])for(const wy of[-36,-22])g.fillRect(bx+wx,GROUND+wy,5,8);
+    g.fillStyle="#FFE9BE";g.fillRect(bx-6*open,GROUND-20,12*open,20);if(open>0){glow(bx,GROUND-8,44,open*.85);g.fillStyle=`rgba(255,226,170,${.28*open})`;g.beginPath();g.moveTo(bx-6*open,GROUND);g.lineTo(bx+6*open,GROUND);g.lineTo(bx+24*open,100);g.lineTo(bx-24*open,100);g.fill();}}
+  /* Shore and pond */
+  g.fillStyle=INK;g.fillRect(0,GROUND-.15,VW,100-GROUND);
+  const pondL=118-cam;if(pondL<VW){const yW=GROUND+3.6,q=g.createLinearGradient(0,yW,0,100);q.addColorStop(0,lerpC([20,26,30],[226,164,110],dawn));q.addColorStop(.4,lerpC([14,19,23],[92,84,86],dawn));q.addColorStop(1,lerpC([10,14,17],[22,30,36],dawn));g.fillStyle=q;g.beginPath();g.moveTo(Math.max(0,pondL),yW);g.lineTo(VW,yW);g.lineTo(VW,100);g.lineTo(Math.max(0,pondL-14),100);g.fill();
+    /* Sun track and ripples */
+    g.globalAlpha=.7*dawn;g.fillStyle="#F6D2A0";for(let i=0;i<24;i++){const yy=yW+1+i*1.0,w=(3+hash(i)*9)*(1-i/40)*(.8+.2*Math.sin(t*2+i));if(sx-w>pondL)g.fillRect(sx-w+Math.sin(t+i)*1.1,yy,w*2,.22);}g.globalAlpha=1;
+    /* Mist */
+    for(let i=0;i<7;i++){const mx=((i*43+t*1.3-cam*.8)%(VW+60)+VW+60)%(VW+60)-30,m=g.createRadialGradient(mx,yW,0,mx,yW,24);m.addColorStop(0,`rgba(250,226,200,${.2*dawn})`);m.addColorStop(1,"rgba(250,226,200,0)");g.save();g.translate(0,yW);g.scale(1,.2);g.translate(0,-yW);g.fillStyle=m;g.fillRect(mx-24,yW-24,48,48);g.restore();}}
+  /* Thoreau and the cabin, just ahead of where Julian stops. */
+  const thX=stopX+Math.max(19,VW*.34)-cam,hF=26;
+  {const cx=thX+36;g.fillStyle=INK;g.fillRect(cx-9,GROUND-11,18,11);g.beginPath();g.moveTo(cx-10.5,GROUND-11);g.lineTo(cx,GROUND-18);g.lineTo(cx+10.5,GROUND-11);g.fill();g.fillRect(cx+4,GROUND-19,2.2,6);g.fillStyle=`rgba(255,214,140,${.75-dawn*.3})`;g.fillRect(cx-6,GROUND-8,3.4,3.6);
+    g.fillStyle=INK;g.beginPath();g.moveTo(thX-4.6,GROUND);g.quadraticCurveTo(thX-3,GROUND-1,thX-2.9,GROUND-7.7);g.lineTo(thX+2.5,GROUND-8.1);g.quadraticCurveTo(thX+2.7,GROUND-1,thX+4.4,GROUND);g.fill();
+    const n=sm(5.4,5.8,t)-sm(6.1,6.6,t);
+    person(thX,GROUND+4.83,hF*.96,{f0:1.35,f1:1.5,b0:1.3,b1:1.4,a0:.95,a1:.75,r0:.75,r1:.7,lean:.06,brim:true,beard:true,rod:.5,tilt:n*.32});}
+  /* The rider slows beside Julian, lifts him up, then gallops off. */
+  const jX=VW*lead,rideOn=t>10.2,rideU=Math.min(1,Math.max(0,(t-10.2)/4.1)),v=rideU*2-1,meet=jX+5,slow=6,rX=meet+slow*v+(v<0?meet+30-slow:VW+34-meet-slow)*v*v*v;
+  const sc=3,hy=GROUND+1,ph=rX*.32,bob=Math.abs(Math.sin(ph))*-.7*sc/8,seatY=hy+bob-sc*8+3.95*28/7.5;
+  /* Two lanterns in the steeple. */
+  {const lx=-cam*.5+82;for(let i=0;i<2;i++){const a=sm(9.7+i*.4,10+i*.4,t)*(1-sm(14.5,15,t));if(a>0){const ly=GROUND-24.6+i*4.2;glow(lx,ly,9,a*.9);g.fillStyle=`rgba(255,226,170,${a})`;g.fillRect(lx-.7,ly-1,1.4,2);}}}
+  /* Julian */
+  if(rideU<1){
+    const walking=t>1&&t<6.6,base=walking?walk((pX-40)*.42):{f0:.07,f1:.03,b0:-.07,b1:.03,a0:.08,a1:.2,r0:-.06,r1:.2,lean:.01};
+    const wave=sm(6.8,7.2,t)*(1-sm(8.6,9.1,t)),reach=sm(11.35,11.75,t),climb=sm(11.75,12.5,t),hold=sm(12.35,12.75,t);
+    const a0=mix(mix(base.a0,2.05,wave),2.45,reach),a1=mix(mix(base.a1,1.09+Math.sin(t*7)*.3,wave),.15,reach);
+    const P={};for(const n of["f0","f1","b0","b1","lean","r0","r1"])P[n]=mix(base[n],{...seat,r0:.5,r1:.9,lean:.13}[n],climb);
+    const yy=mix(GROUND+(walking?Math.abs(Math.sin((pX-40)*.42))*-.25:0),seatY,climb)-Math.sin(climb*Math.PI)*2,emerge=sm(.75,1.25,t);
+    g.globalAlpha=emerge;person(mix(pX-cam,rX-sc*1.7,climb),yy,mix(30,28,climb),{...P,a0:mix(a0,.7,hold),a1:mix(a1,.9,hold),open:wave>.4,curls:true,shirt:true,keys:walking||t<1?(t*11):.05+Math.sin(t*1.6)*.1});g.globalAlpha=1;
+  }
+  /* Horse and Revere, lantern held out front, free arm reaching back for Julian. */
+  if(rideOn&&rideU<1){const rv=sm(11.25,11.7,t)*(1-sm(12.2,12.6,t));
+    horse(rX,hy,sc,ph);
+    const R=person(rX+sc*.35,seatY,28,{...seat,a0:mix(.9,-2,rv),a1:mix(.75,.3,rv),r0:2.5,r1:.05,tricorn:true,lean:.16});
+    const[lx,ly]=R.rear;g.strokeStyle=INK;g.lineWidth=.25;g.beginPath();g.moveTo(lx,ly);g.lineTo(lx,ly+1.6);g.stroke();glow(lx,ly+2.4,7,.6);g.fillStyle="#FFE2AA";g.fillRect(lx-.6,ly+1.6,1.2,1.7);}
+  g.restore();
+  /* Words */
+  const LABELS=[[1.3,5,"Concord, Massachusetts","Where I'm from"],[4.6,6.8,"Walden Pond",""],[10.4,13.8,"Paul Revere","April 18, 1775"]];
+  const l=LABELS.findIndex(o=>t>=o[0]&&t<o[1]);const el=document.getElementById("label");if(l>=0){const o=LABELS[l];labelT.textContent=o[2];labelS.textContent=o[3];el.style.opacity=sm(o[0],o[0]+.3,t)*(1-sm(o[1]-.3,o[1],t));}else el.style.opacity=0;
+  capEl.textContent=LINE.slice(0,Math.ceil(Math.min(1,Math.max(0,(t-6.9)/2.9))*LINE.length));capEl.style.opacity=sm(6.7,7,t)*(1-sm(10.1,10.5,t));
+  fill.style.transform=`scaleX(${t/T})`;
+  g.fillStyle=`rgba(14,18,20,${Math.max(1-sm(0,.5,t),sm(14.2,15,t))})`;g.fillRect(0,0,W,H);
+  endEl.style.display=t>=15.1?"flex":"none";
+}
+const labelT=document.getElementById("labelT"),labelS=document.getElementById("labelS"),capEl=document.getElementById("cap"),fill=document.getElementById("fill"),endEl=document.getElementById("end"),pp=document.getElementById("pp");
+const maxS=()=>Math.max(1,document.documentElement.scrollHeight-innerHeight);
+let clock=0,last=performance.now(),playing=!matchMedia("(prefers-reduced-motion:reduce)").matches;
+const setP=v=>{playing=v;pp.textContent=v?"Pause":"Play";};setP(playing);
+const restart=()=>{clock=0;scrollTo(0,0);setP(true);};
+pp.addEventListener("click",()=>{if(clock>=T-.05)restart();else setP(!playing);});document.getElementById("again").addEventListener("click",restart);
+for(const e of["wheel","touchmove"])addEventListener(e,()=>{if(playing)setP(false);},{passive:true});
+function loop(n){requestAnimationFrame(loop);const dt=Math.min((n-last)/1000,.1);last=n;
+  if(playing){clock=Math.min(T,clock+dt);scrollTo(0,clock/T*maxS());if(clock>=T)setP(false);}else clock+=(Math.min(1,scrollY/maxS())*T-clock)*(1-Math.exp(-dt*8));
+  frame(clock);}
+requestAnimationFrame(loop);
+</script></body></html>

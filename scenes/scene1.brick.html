@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Virtual Resume Scene 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one full-screen brick-built film, played by a single clock that autoplay and scrolling both drive. */
+:root{--ink:#FFF8EE;--glass:rgba(16,20,30,.62);--accent:#F2B27A;--f-display:"Spectral",Georgia,serif;--f-body:"IBM Plex Sans",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}html{scrollbar-width:none;background:#0E1420}html::-webkit-scrollbar{display:none}
+body{margin:0;background:#0E1420;color:var(--ink);font:16px/1.5 var(--f-body)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.mono{font:500 12px/1.35 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+#track{height:1200vh}
+#tag{position:fixed;left:20px;top:18px;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+#label{position:fixed;left:20px;top:50px;display:flex;flex-direction:column;gap:2px;opacity:0;text-shadow:0 1px 12px rgba(0,0,0,.7)}
+#labelT{font:600 clamp(24px,3.4vw,42px)/1.1 var(--f-display)}
+#labelS{color:var(--accent)}
+#caption{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(760px,calc(100vw - 32px));background:var(--glass);backdrop-filter:blur(6px);padding:14px 20px;opacity:0;min-height:88px}
+#caption b{display:block;color:var(--accent);font:500 11px/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+#capT{font:500 clamp(17px,2vw,22px)/1.4 var(--f-display)}
+#controls{position:fixed;left:20px;right:20px;bottom:18px;display:flex;align-items:center;gap:16px}
+#controls button{min-height:32px;min-width:64px;text-align:left;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+#bar{flex:1;height:2px;background:rgba(255,255,255,.28)}#fill{height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+#fade{position:fixed;inset:0;background:#0E1420;pointer-events:none}
+#end{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:20px}
+#end h2{font:600 clamp(30px,5vw,56px)/1.1 var(--f-display);margin:0}
+#replay{border:1px solid var(--accent);padding:10px 22px;color:var(--ink)}
+#plain{display:none;max-width:640px;margin:0 auto;padding:48px 20px;gap:16px;flex-direction:column}
+#plain h1{font:600 40px/1.1 var(--f-display);margin:0}
+.flat #gl,.flat #track,.flat #controls,.flat #fade,.flat #label,.flat #caption,.flat #tag{display:none}.flat #plain{display:flex}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<canvas id="gl" aria-hidden="true"></canvas><div id="track" aria-hidden="true"></div>
+<div id="tag" class="mono">Virtual Resume · Scene 1</div>
+<div id="label" aria-live="off"><span id="labelT"></span><span id="labelS" class="mono"></span></div>
+<div id="caption"><b>Julian</b><span id="capT"></span></div>
+<div id="controls"><button type="button" id="pp" class="mono">Pause</button><div id="bar"><div id="fill"></div></div></div>
+<div id="fade"></div>
+<div id="end"><span class="mono">Virtual Resume</span><h2>End of Scene 1</h2><button type="button" id="replay" class="mono">Watch again</button></div>
+<main id="plain"><span class="mono">Virtual Resume · Scene 1</span><h1>Concord, Massachusetts</h1><p>Hi, I'm Julian. Welcome to my portfolio. This is my virtual resume: a little bit about me, where I've been, and what I've built along the way.</p></main>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+<script>
+const LINE="Hi, I'm Julian. Welcome to my portfolio. This is my virtual resume: a little bit about me, where I've been, and what I've built along the way.";
+const T=36;
+const glOK=(()=>{try{return typeof THREE!=="undefined"&&!!document.createElement("canvas").getContext("webgl2");}catch(_){return false;}})();
+if(!glOK){document.documentElement.classList.add("flat");}else film();
+function film(){
+  const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const canvas=document.getElementById("gl");
+  const r=new THREE.WebGLRenderer({canvas,antialias:true});r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
+  const sc=new THREE.Scene();sc.fog=new THREE.Fog(0x3A3F5C,22,92);
+  const cam=new THREE.PerspectiveCamera(46,1,.1,500);
+  const smooth=(a,b,t)=>{t=Math.min(1,Math.max(0,(t-a)/(b-a)));return t*t*(3-2*t);};
+  const clamp01=x=>Math.min(1,Math.max(0,x)),lerp=(a,b,t)=>a+(b-a)*t,V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const mat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
+  const box=(w,h,d,m,x=0,y=0,z=0)=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);b.position.set(x,y,z);b.castShadow=true;b.receiveShadow=true;return b;};
+  const cyl=(a,b,h,n,m,x=0,y=0,z=0)=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(a,b,h,n),m);c.position.set(x,y,z);c.castShadow=true;return c;};
+  const canvasTex=(w,h,draw)=>{const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;};
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+
+  /* Sky and light: pre-dawn blue at the hospital, peach dawn at the pond. */
+  const skyU={top:{value:new THREE.Color()},low:{value:new THREE.Color()}};
+  sc.add(new THREE.Mesh(new THREE.SphereGeometry(300,24,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:skyU,vertexShader:"varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",fragmentShader:"uniform vec3 top,low;varying float h;void main(){gl_FragColor=vec4(mix(low,top,smoothstep(-.02,.5,h)),1.);}"})));
+  const hemi=new THREE.HemisphereLight(0xffffff,0x3A5238,1);sc.add(hemi);
+  const sunL=new THREE.DirectionalLight(0xffffff,1.5);sunL.castShadow=true;sunL.shadow.mapSize.set(1536,1536);Object.assign(sunL.shadow.camera,{left:-26,right:26,top:26,bottom:-26,near:1,far:120});sc.add(sunL,sunL.target);
+  const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(9,40),new THREE.MeshBasicMaterial({color:0xFFD9A8,fog:false}));sunDisc.position.set(62,9,210);sunDisc.rotation.y=Math.PI;sc.add(sunDisc);
+
+  /* The land: ground, studs near the path, the pond, its shore. */
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420),new THREE.MeshLambertMaterial({color:0x4C6B3F}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;sc.add(ground);
+  const PX=38,PZ=62,RX=30,RZ=19;const inPond=(x,z,m=0)=>((x-PX)/(RX+m))**2+((z-PZ)/(RZ+m))**2<1;
+  const ring=(rx,rz,y,m)=>{const g=new THREE.Mesh(new THREE.CircleGeometry(1,72),m);g.rotation.x=-Math.PI/2;g.scale.set(rx,rz,1);g.position.set(PX,y,PZ);g.receiveShadow=true;sc.add(g);return g;};
+  ring(RX+2.2,RZ+2.2,.02,new THREE.MeshLambertMaterial({color:0xC9B48C}));
+  const waterU={t:{value:0},deep:{value:new THREE.Color(0x2F6C8F)},glow:{value:new THREE.Color(0xF6B98A)},sun:{value:0}};
+  ring(RX,RZ,.04,new THREE.ShaderMaterial({uniforms:waterU,vertexShader:"varying vec3 p;void main(){vec4 w=modelMatrix*vec4(position,1.);p=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",fragmentShader:"precision highp float;uniform float t,sun;uniform vec3 deep,glow;varying vec3 p;void main(){float r=sin(p.x*.5+p.z*.9+t*.5)+.6*sin(p.x*1.1-p.z*1.7+t*.8);float band=smoothstep(10.,0.,abs(p.x-52.-(p.z-62.)*.1));vec3 c=mix(deep,glow,clamp(sun*(.08+.62*band+.03*r),0.,1.));gl_FragColor=vec4(c,1.);}"}));
+  const curve=new THREE.CatmullRomCurve3([V(0,0,-1.2),V(0,0,8),V(4,0,20),V(12,0,32),V(22,0,38),V(36,0,41)]);
+  const L=curve.getLength();
+  {const pts=[],idx=[];for(let i=0;i<=120;i++){const u=i/120,p=curve.getPointAt(u),tan=curve.getTangentAt(u),n=V(tan.z,0,-tan.x).multiplyScalar(1.3);pts.push(p.x+n.x,.03,p.z+n.z,p.x-n.x,.03,p.z-n.z);if(i<120){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
+    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pts,3));g.setIndex(idx);g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:0xB6A684,side:THREE.DoubleSide}));m.receiveShadow=true;sc.add(m);}
+  const nearPath=(x,z,d)=>{for(let i=0;i<=40;i++){const p=curve.getPointAt(i/40);if(Math.hypot(p.x-x,p.z-z)<d)return true;}return false;};
+  {const studs=[];let tries=0;while(studs.length<1800&&tries++<60000){const x=rnd()*90-20,z=rnd()*62-8;if(inPond(x,z,3)||nearPath(x,z,1.7)||(Math.abs(x)<15&&z<1))continue;studs.push([Math.round(x*2)/2,Math.round(z*2)/2]);}
+    const m=new THREE.InstancedMesh(new THREE.CylinderGeometry(.13,.13,.08,8),new THREE.MeshLambertMaterial({color:0x5B7C4B}),studs.length),o=new THREE.Object3D();studs.forEach((s,i)=>{o.position.set(s[0],.04,s[1]);o.updateMatrix();m.setMatrixAt(i,o.matrix);});sc.add(m);}
+
+  /* Brick trees: stacked square tiers, one instanced draw. */
+  {const spots=[];let tries=0;const clear=(x,z)=>!inPond(x,z,3.4)&&!nearPath(x,z,4)&&!(x>-18&&x<18&&z<7)&&Math.hypot(x-50,z-31)>8&&Math.hypot(x-44,z-42)>4&&!(z>35.5&&z<43.5&&x>-2);
+    while(spots.length<230&&tries++<9000){const x=rnd()*190-70,z=rnd()*170-30;if(clear(x,z)&&spots.every(s=>Math.hypot(s[0]-x,s[1]-z)>3.1))spots.push([x,z,.8+rnd()*.7]);}
+    const n=spots.length*5,m=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial({color:0xffffff}),n),o=new THREE.Object3D(),col=new THREE.Color();let k=0;
+    spots.forEach(([x,z,s])=>{const put=(w,h,y,c)=>{o.position.set(x,y*s,z);o.scale.set(w*s,h*s,w*s);o.updateMatrix();m.setMatrixAt(k,o.matrix);col.set(c);m.setColorAt(k,col);k++;};
+      const g=rnd()>.5?0x2F5A3A:0x386B42;put(.55,1.6,.8,0x5A4030);put(3,1,2,g);put(2.4,1,3,g);put(1.7,1,4,g);put(.9,1,5,g);});
+    m.castShadow=true;sc.add(m);}
+
+  /* Figures: blocky toy people with a pivot at each shoulder and hip. */
+  const SKIN=0xF2C94C;
+  const faceTex=(beard)=>canvasTex(256,128,(c,w,h)=>{c.fillStyle="#F2C94C";c.fillRect(0,0,w,h);c.fillStyle="#222";c.beginPath();c.arc(112,54,6,0,7);c.arc(144,54,6,0,7);c.fill();c.lineWidth=4;c.strokeStyle="#222";c.lineCap="round";c.beginPath();c.moveTo(104,42);c.lineTo(119,40);c.moveTo(137,40);c.lineTo(152,42);c.stroke();c.beginPath();c.arc(128,70,16,.25,Math.PI-.25);c.stroke();if(beard){c.fillStyle="#3A2A1E";c.fillRect(92,92,72,36);}});
+  const suitTex=()=>canvasTex(128,128,(c,w,h)=>{c.fillStyle="#17233D";c.fillRect(0,0,w,h);c.fillStyle="#F7F7F2";c.beginPath();c.moveTo(40,0);c.lineTo(88,0);c.lineTo(64,70);c.fill();c.fillStyle="#7B1E2B";c.beginPath();c.moveTo(58,6);c.lineTo(70,6);c.lineTo(68,20);c.lineTo(72,58);c.lineTo(64,70);c.lineTo(56,58);c.lineTo(60,20);c.fill();c.strokeStyle="#0D1526";c.lineWidth=5;c.beginPath();c.moveTo(38,0);c.lineTo(64,76);c.lineTo(90,0);c.moveTo(64,76);c.lineTo(64,128);c.stroke();c.fillStyle="#F7F7F2";c.fillRect(84,36,18,5);c.fillStyle="#0D1526";c.beginPath();c.arc(64,92,3,0,7);c.arc(64,108,3,0,7);c.fill();});
+  function person({coat,pants=0x202020,shoes=0x111111,front=null,beard=false}){
+    const root=new THREE.Group(),co=mat(coat),pa=mat(pants),sk=mat(SKIN);
+    const torsoMats=[co,co,co,co,front?new THREE.MeshLambertMaterial({map:front}):co,co];
+    const torso=new THREE.Mesh(new THREE.BoxGeometry(.92,.82,.46),torsoMats);torso.position.y=1.26;torso.castShadow=true;root.add(torso);
+    root.add(cyl(.14,.14,.1,10,sk,0,1.71,0));
+    const headPivot=new THREE.Group();headPivot.position.y=1.75;root.add(headPivot);
+    const head=new THREE.Mesh(new THREE.CylinderGeometry(.33,.33,.46,20),[new THREE.MeshLambertMaterial({map:faceTex(beard)}),sk,sk]);head.position.y=.23;head.rotation.y=Math.PI;head.castShadow=true;headPivot.add(head);
+    const limb=(x,y,len,w,m,end,endH)=>{const g=new THREE.Group();g.position.set(x,y,0);g.add(box(w,len,w+.04,m,0,-len/2,0));g.add(box(w,endH,w+.1,end,0,-len-endH/2,.03));root.add(g);return g;};
+    const armL=limb(-.58,1.62,.68,.24,co,sk,.14),armR=limb(.58,1.62,.68,.24,co,sk,.14);
+    const legL=limb(-.25,.86,.74,.36,pa,mat(shoes),.12),legR=limb(.25,.86,.74,.36,pa,mat(shoes),.12);
+    return{root,headPivot,armL,armR,legL,legR};
+  }
+  /* Julian: suit, curly black hair, a keychain in the right hand. */
+  const me=person({coat:0x17233D,pants:0x17233D,front:suitTex()});sc.add(me.root);
+  {const hairMat=mat(0x121212);for(let i=0;i<70;i++){const a=rnd()*Math.PI*2,e=.15+rnd()*1.25;const s=.1+rnd()*.07;const m=new THREE.Mesh(new THREE.IcosahedronGeometry(s,0),hairMat);const R=.36;const front=Math.cos(a)>.35&&e<.75;if(front)continue;m.position.set(Math.sin(a)*Math.cos(e)*R,.42+Math.sin(e)*.26,Math.cos(a)*Math.cos(e)*R);m.castShadow=true;me.headPivot.add(m);}
+    const shirtCuff=box(.27,.05,.3,mat(0xF7F7F2),0,-.67,.01);me.armL.add(shirtCuff);me.armR.add(shirtCuff.clone());}
+  const keys=new THREE.Group();keys.position.set(.02,-.86,.12);me.armR.add(keys);
+  {const gold=new THREE.MeshLambertMaterial({color:0xE8C468,emissive:0x5A4410});keys.add(new THREE.Mesh(new THREE.TorusGeometry(.09,.016,8,20),gold));const k=box(.05,.2,.02,gold,0,-.19,0);keys.add(k,box(.08,.03,.02,gold,.03,-.26,0),box(.06,.03,.02,gold,.025,-.21,0));}
+  /* Thoreau: seated by the cabin, fishing, with his neck beard and a wide hat. */
+  const th=person({coat:0x5E4632,pants:0x3F3226,shoes:0x2A1E14,beard:true});sc.add(th.root);
+  th.root.position.set(44,-.3,42);th.legL.rotation.x=th.legR.rotation.x=-Math.PI/2;
+  {th.headPivot.add(cyl(.62,.62,.05,20,mat(0x3A2B1E),0,.48,0),cyl(.33,.36,.28,16,mat(0x3A2B1E),0,.62,0));th.headPivot.add(box(.5,.14,.3,mat(0x3A2B1E),0,-.03,.2));
+    sc.add(cyl(.6,.66,.56,12,mat(0x7A5A3C),44,.28,41.85));
+    th.armR.rotation.x=th.armL.rotation.x=-1.05;
+    const rod=cyl(.018,.03,4.4,6,mat(0x4A3322),0,-.1,2);rod.rotation.x=1.85;th.armR.add(rod);th.rod=rod;}
+  sc.updateMatrixWorld(true);const tip=th.rod.localToWorld(V(0,-2.2,0));if(tip.y<.5)tip.y=.5;
+  sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([tip,V(tip.x,.05,tip.z)]),new THREE.LineBasicMaterial({color:0xEDEDED})));
+  const bob=cyl(.09,.09,.1,10,new THREE.MeshLambertMaterial({color:0xD94F3D}),tip.x,.08,tip.z);sc.add(bob);
+  /* Paul Revere and his horse. */
+  const horse=new THREE.Group();sc.add(horse);horse.rotation.y=Math.PI/2;
+  const hc=mat(0x6B432A),hd=mat(0x35231A);
+  horse.add(box(.95,.95,2.4,hc,0,1.62,0),box(.6,1.05,.6,hc,0,2.4,1.12),box(.5,.5,1,hc,0,2.85,1.5),box(.14,.3,.14,hd,.16,3.2,1.2),box(.14,.3,.14,hd,-.16,3.2,1.2),box(.12,.9,.5,hd,0,2.7,.92),box(.22,1,.22,hd,0,1.45,-1.28),box(1,.12,.9,mat(0x7B1E2B),0,2.14,-.05));
+  const hLegs=[[-.32,.95],[.32,.95],[-.32,-.95],[.32,-.95]].map(([x,z])=>{const g=new THREE.Group();g.position.set(x,1.2,z);g.add(box(.26,1,.26,hc,0,-.5,0),box(.3,.2,.32,hd,0,-1.1,0));horse.add(g);return g;});
+  const pr=person({coat:0x1F3A68,pants:0xE6DDC8,shoes:0x161616});horse.add(pr.root);pr.root.position.set(0,1.28,.25);pr.legL.rotation.x=pr.legR.rotation.x=-1.25;pr.legL.position.x=-.38;pr.legR.position.x=.38;
+  {pr.headPivot.add(cyl(.62,.62,.09,3,mat(0x161616),0,.5,0),cyl(.34,.36,.26,16,mat(0x161616),0,.62,0));}
+  const glowTex=canvasTex(128,128,(c)=>{const g=c.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,220,150,1)");g.addColorStop(.25,"rgba(255,190,100,.6)");g.addColorStop(1,"rgba(255,170,80,0)");c.fillStyle=g;c.fillRect(0,0,128,128);});
+  const glow=(s)=>{const m=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,transparent:true,depthWrite:false,fog:false,opacity:0}));m.scale.setScalar(s);return m;};
+  const lantern=(x,z,h)=>{const g=new THREE.Group();g.position.set(x,0,z);g.add(box(.14,h,.14,mat(0x3A2A1E),0,h/2,0),box(.7,.1,.1,mat(0x3A2A1E),.3,h,0));const body=box(.26,.36,.26,new THREE.MeshLambertMaterial({color:0xFFD27A,emissive:0xFFA64D,emissiveIntensity:0}),.6,h-.3,0);g.add(body);const s=glow(3);s.position.set(.6,h-.3,0);g.add(s);sc.add(g);return{body,s};};
+  const lanterns=[lantern(26,35.6,4.2),lantern(30.5,35.6,4.7)];
+
+  /* Thoreau's cabin: one room, shingled roof, a chimney. */
+  {const c=new THREE.Group();c.position.set(50,0,31);const wood=mat(0x8A6A48),roof=mat(0x4A4038);c.add(box(5,3,4,wood,0,1.5,0),box(1,1.9,.1,mat(0x3F2C1E),0,.95,2.03),box(.9,.9,.1,mat(0xBFD6E0),1.7,1.8,2.03),box(.9,.9,.1,mat(0xBFD6E0),-1.7,1.8,2.03));
+    for(let i=0;i<5;i++)c.add(box(5.6-i*.0,.3,1,roof,0,3.2+i*.3,1.9-i*.7),box(5.6,.3,1,roof,0,3.2+i*.3,-1.9+i*.7));c.add(box(.8,2,.8,mat(0x8E4A3A),1.5,4.7,-.6));
+    c.rotation.y=-.25;c.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});sc.add(c);}
+
+  /* Emerson Hospital: long brick front, lit windows, a sign, double doors on hinges. */
+  const doorL=new THREE.Group(),doorR=new THREE.Group();const lobby=new THREE.PointLight(0xFFF1D0,0,26,1.6);
+  {const h=new THREE.Group();const brickT=canvasTex(256,128,(c,w,ht)=>{c.fillStyle="#8E4A3A";c.fillRect(0,0,w,ht);c.strokeStyle="#6F382B";c.lineWidth=3;for(let y=0;y<=ht;y+=16){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();for(let x=(y/16)%2?0:16;x<w;x+=32){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+16);c.stroke();}}});brickT.wrapS=brickT.wrapT=THREE.RepeatWrapping;brickT.repeat.set(6,3);
+    const brick=new THREE.MeshLambertMaterial({map:brickT});
+    const side=(w,x)=>{const b=box(w,8,8,brick,x,4,-4.1);h.add(b);};side(15,-10);side(15,10);h.add(box(5,3,.1,new THREE.MeshBasicMaterial({color:0xFFF1D0}),0,1.5,-3.2),box(5,2.6,8,brick,0,6.7,-4.1),box(1.2,3.6,3,brick,-2.1,1.8,-1.6),box(1.2,3.6,3,brick,2.1,1.8,-1.6));
+    h.add(box(9,.45,4.4,mat(0xDAD6CC),0,3.9,.4),box(.3,3.9,.3,mat(0xDAD6CC),-4.2,1.95,2.3),box(.3,3.9,.3,mat(0xDAD6CC),4.2,1.95,2.3));
+    const win=new THREE.MeshBasicMaterial({color:0xFFE3A8});for(const x of[-15,-12,-9,-6,6,9,12,15])for(const y of[2.2,5.5])h.add(box(1.5,1.6,.1,win,x,y,-.05));
+    const sign=new THREE.Mesh(new THREE.PlaneGeometry(9,1.1),new THREE.MeshBasicMaterial({map:canvasTex(1024,128,(c,w,ht)=>{c.fillStyle="#F4F1E8";c.fillRect(0,0,w,ht);c.fillStyle="#1B3556";c.font="700 72px Arial,sans-serif";c.textAlign="center";c.textBaseline="middle";c.fillText("EMERSON HOSPITAL",w/2,ht/2+3);})}));sign.position.set(0,5.1,2.63);h.add(box(9.2,1.3,.1,mat(0xDAD6CC),0,5.1,2.56),sign);h.position.z=0;
+    sc.add(h);
+    const glass=new THREE.MeshLambertMaterial({color:0x9CC4D6,emissive:0x395B6B});const frame=mat(0x2B3540);
+    const leaf=(g,dir)=>{g.position.set(dir*1.5,0,0);g.add(box(1.5,3.2,.12,frame,-dir*.75,1.6,0),box(1.1,2.5,.14,glass,-dir*.75,1.7,0),box(.08,.7,.2,mat(0xE0E0E0),-dir*1.3,1.5,.1));sc.add(g);};leaf(doorL,-1);leaf(doorR,1);
+    lobby.position.set(0,2.2,.6);sc.add(lobby);}
+
+  /* Dawn mist on the water. */
+  const mistTex=canvasTex(128,128,(c)=>{const g=c.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,"rgba(255,240,225,.55)");g.addColorStop(1,"rgba(255,240,225,0)");c.fillStyle=g;c.fillRect(0,0,128,128);});
+  const mists=[];for(let i=0;i<28;i++){const a=rnd()*6.28,d=Math.sqrt(rnd());const m=new THREE.Sprite(new THREE.SpriteMaterial({map:mistTex,transparent:true,depthWrite:false,opacity:0,fog:false}));m.scale.set(16+rnd()*12,3+rnd()*2.5,1);m.position.set(PX+Math.cos(a)*d*RX*.95,1.1+rnd()*.8,PZ+Math.sin(a)*d*RZ*.9);m.userData={x:m.position.x,sp:rnd()*.2+.1,ph:rnd()*6};sc.add(m);mists.push(m);}
+
+  /* The one clock. Every pose below is a pure function of t, so scrubbing and playing match. */
+  const size=()=>{const w=innerWidth,h=innerHeight;r.setPixelRatio(Math.min(devicePixelRatio||1,w<760?1.5:1.75));r.setSize(w,h,false);cam.aspect=w/h;cam.fov=w<h?66:46;cam.updateProjectionMatrix();};addEventListener("resize",size);size();
+  const walkEnd=17.2,walkStart=1.6;
+  const av=V(0,0,0),tan=V(0,0,1),horsePos=V(0,0,0),camA=V(0,0,0),lookA=V(0,0,0),camB=V(0,0,0),lookB=V(0,0,0);
+  const SKY=[[0x10203F,0x3A3F5C,0x3A3F5C],[0x7088BC,0xF6B98A,0xE9B79A]];const c1=new THREE.Color(),c2=new THREE.Color();
+  const shots=[ /* start time, camera, look target */
+    [0,V(0,2.6,18),V(0,3.1,0)],[2.4,V(0,2.4,15.5),V(0,2.7,0)],
+    [10,V(19,3.6,35),V(46,2.4,84)],[12.4,V(22,3.6,39),V(56,2.6,90)],
+    [14,V(30,2.5,50),V(43,1.5,38)],[17,V(31,2.3,49),V(40,1.5,39)],
+    [18.2,V(31.5,1.9,47.6),V(36.8,1.75,41)],[26,V(31.5,1.9,47),V(36.8,1.75,41)],
+    [27.2,V(25,3.1,50),V(30,2,38)],[28,V(25,3.1,50),V(31,1.8,38)],[31.5,V(27,2.8,49),V(35,1.8,39)]];
+  function shotAt(t){let i=0;while(i<shots.length-2&&t>=shots[i+1][0])i++;const a=shots[i],b=shots[i+1],u=smooth(a[0],b[0],t);camA.lerpVectors(a[1],b[1],u);lookA.lerpVectors(a[2],b[2],u);}
+  const label=document.getElementById("label"),labelT=document.getElementById("labelT"),labelS=document.getElementById("labelS"),caption=document.getElementById("caption"),capT=document.getElementById("capT"),fade=document.getElementById("fade"),fill=document.getElementById("fill"),end=document.getElementById("end");
+  const LABELS=[[4.6,8.6,"Emerson Hospital","Concord, Massachusetts"],[10.6,14,"Walden Pond","Concord, Massachusetts"],[14.4,17.4,"Henry David Thoreau","Fishing, by his cabin"],[26.6,31.6,"Paul Revere","April 18, 1775"]];
+  let shownLabel=-1,clockT=0;
+  function pose(t){
+    /* World colour */
+    const d=smooth(5,13,t);c1.set(SKY[0][0]).lerp(c2.set(SKY[1][0]),d);skyU.top.value.copy(c1);c1.set(SKY[0][1]).lerp(c2.set(SKY[1][1]),d);skyU.low.value.copy(c1);c1.set(SKY[0][2]).lerp(c2.set(SKY[1][2]),d);sc.fog.color.copy(c1);
+    hemi.intensity=lerp(.75,1.7,d);sunL.intensity=lerp(.35,2.1,d);sunL.color.set(0xFFD6B0);waterU.sun.value=d;sunDisc.material.opacity=1;sunDisc.position.y=lerp(1,10,d);
+    /* Doors */
+    const burst=clamp01((t-1.15)/.32),open=1-Math.pow(1-burst,3),rebound=Math.sin(clamp01((t-1.47)/.9)*Math.PI*3)*Math.exp(-clamp01((t-1.47)/.9)*3)*.14;
+    doorL.rotation.y=-(open*1.85+rebound);doorR.rotation.y=open*1.85+rebound;lobby.intensity=lerp(0,70,burst)*(1-smooth(5,9,t));
+    /* Julian */
+    const u=clamp01((t-walkStart)/(walkEnd-walkStart)),dist=u*L;curve.getPointAt(u,av);curve.getTangentAt(u,tan);
+    let heading=Math.atan2(tan.x,tan.z);const walking=t>walkStart&&t<walkEnd,phase=dist*2;
+    const sw=walking?Math.sin(phase)*.72:0,mount=smooth(31,32,t);
+    heading=lerp(heading,Math.atan2(31.5-36,47.6-41),smooth(walkEnd,18.1,t));heading=lerp(heading,Math.PI/2,smooth(30.6,31.4,t));
+    /* Horse first, so Julian can climb on. */
+    const arrive=smooth(28,31,t),leave=clamp01((t-32)/3.6),lx=4+30.5*(1-Math.pow(1-clamp01((t-28)/3),2.2));
+    horsePos.set(lx+leave*leave*52,0,lerp(lerp(37.8,39.9,arrive),38.4,smooth(32,33.5,t)));horse.position.copy(horsePos);horse.visible=t>27.6&&t<36;
+    const galloping=(t>28&&t<30.8)||t>32;const gp=horsePos.x*2.1;hLegs.forEach((g,i)=>{g.rotation.x=galloping?Math.sin(gp+i*1.7)*.85:0;});horse.position.y=galloping?Math.abs(Math.sin(gp))*.14:0;
+    pr.armR.rotation.x=lerp(-1.1,-1.75,smooth(30.4,31,t)*(1-smooth(31.9,32.3,t)));pr.armL.rotation.x=-1.1;pr.armR.rotation.z=smooth(30.4,31,t)*(1-smooth(31.9,32.3,t))*-.55;
+    me.root.position.set(lerp(av.x,horsePos.x-.95,mount),lerp(0,horse.position.y+1.28,mount)+(walking?Math.abs(Math.sin(phase))*.05:0)+Math.sin(mount*Math.PI)*.8,lerp(av.z,horsePos.z,mount));
+    me.root.rotation.y=heading;me.root.rotation.z=walking?Math.sin(phase)*.02:0;
+    me.legL.rotation.x=lerp(sw,-1.25,mount);me.legR.rotation.x=lerp(-sw,-1.25,mount);me.legL.position.x=lerp(-.25,-.38,mount);me.legR.position.x=lerp(.25,.38,mount);
+    /* Waving from the intro, and the keychain twirling on the walk. */
+    const wave=smooth(18,18.5,t)*(1-smooth(20,20.5,t));
+    me.armL.rotation.x=lerp(-sw*.8,-.6,mount);
+    me.armL.rotation.z=-wave*2.65-Math.sin(t*9)*.22*wave;
+    const twirl=walking||t<walkStart;me.armR.rotation.x=lerp(twirl?-.55:0,-.9,mount);
+    keys.rotation.x=twirl?t*13:Math.sin(t*2)*.12;
+    /* Thoreau's small nod as Julian passes. */
+    const n=clamp01((t-14.9)/1.2);th.headPivot.rotation.x=Math.sin(n*Math.PI*2)*(1-n)*.34+.02;th.root.rotation.y=0;
+    /* Lanterns */
+    lanterns.forEach((l,i)=>{const on=smooth(26.7+i*.9,27.1+i*.9,t)*(.86+.14*Math.sin(t*11+i));l.body.material.emissiveIntensity=on*2.2;l.s.material.opacity=on;});
+    /* Mist */
+    mists.forEach(m=>{m.material.opacity=smooth(8,11,t)*lerp(.82,.1,smooth(12.6,14,t));});
+    /* Camera */
+    shotAt(t);
+    /* Tracking shot: in front of Julian as he leaves the hospital and walks the path. */
+    if(t>2.4&&t<14){const k=smooth(2.4,4.2,t)*(1-smooth(8.6,10.6,t));camB.set(av.x+tan.x*7.6+tan.z*1.9,2.3,av.z+tan.z*7.6-tan.x*1.9);lookB.set(av.x,1.4,av.z);camA.lerp(camB,k);lookA.lerp(lookB,k);}
+    if(t>31.5){const k=smooth(32,33.4,t);camB.set(horsePos.x-8,3.4,horsePos.z+8.2);lookB.set(horsePos.x,1.9,horsePos.z);camA.lerp(camB,k);lookA.lerp(lookB,k);}
+    const hit=t>1.15&&t<1.8?(1-clamp01((t-1.15)/.65))*.09:0,hoof=t>27.5&&t<30.8?.012*Math.sin(t*45):0;
+    cam.position.set(camA.x+Math.sin(t*67)*hit,camA.y+Math.cos(t*53)*hit+hoof,camA.z);cam.lookAt(lookA);
+    sunL.position.set(cam.position.x+14,28,cam.position.z+34);sunL.target.position.set(cam.position.x,0,cam.position.z-8);
+    /* Words */
+    let li=-1;LABELS.forEach((l,i)=>{if(t>=l[0]&&t<l[1])li=i;});if(li!==shownLabel){shownLabel=li;if(li>=0){labelT.textContent=LABELS[li][2];labelS.textContent=LABELS[li][3];}}
+    if(li>=0){const l=LABELS[li];label.style.opacity=smooth(l[0],l[0]+.35,t)*(1-smooth(l[1]-.35,l[1],t));}else label.style.opacity=0;
+    const words=clamp01((t-18.6)/6.8);caption.style.opacity=smooth(18.3,18.7,t)*(1-smooth(26,26.5,t));capT.textContent=LINE.slice(0,Math.ceil(words*LINE.length));
+    fade.style.opacity=Math.max(1-smooth(0,1,t),smooth(34,35.2,t));
+    const over=t>=35.2;end.style.display=over?"flex":"none";fill.style.transform=`scaleX(${t/T})`;
+  }
+  /* Playback: autoplay advances the clock and the scroll bar; touching scroll takes over. */
+  const pp=document.getElementById("pp"),maxS=()=>Math.max(1,document.documentElement.scrollHeight-innerHeight);
+  let playing=!reduced,last=performance.now(),now=0;
+  const setPlaying=v=>{playing=v;pp.textContent=playing?"Pause":(clockT>=T?"Replay":"Play");};setPlaying(playing);
+  pp.addEventListener("click",()=>{if(clockT>=T-.01){clockT=0;scrollTo(0,0);setPlaying(true);}else setPlaying(!playing);});
+  document.getElementById("replay").addEventListener("click",()=>{clockT=0;scrollTo(0,0);setPlaying(true);});
+  for(const e of["wheel","touchmove"])addEventListener(e,()=>{if(playing)setPlaying(false);},{passive:true});
+  addEventListener("keydown",e=>{if(["ArrowDown","ArrowUp","PageDown","PageUp","Space","Home","End"].includes(e.code)&&e.target===document.body&&playing)setPlaying(false);});
+  function loop(n){requestAnimationFrame(loop);const dt=Math.min((n-last)/1000,.1);last=n;now+=dt;
+    if(playing){clockT=Math.min(T,clockT+dt);scrollTo(0,clockT/T*maxS());if(clockT>=T)setPlaying(false);}
+    else{const goal=Math.min(1,scrollY/maxS())*T;clockT+=(goal-clockT)*(1-Math.exp(-dt*7));}
+    waterU.t.value=now;mists.forEach(m=>{m.position.x=m.userData.x+Math.sin(now*m.userData.sp+m.userData.ph)*2.4;});bob.position.y=.08+Math.sin(now*1.7)*.02;
+    pose(clockT);r.render(sc,cam);}
+  requestAnimationFrame(loop);
+}
+</script></body></html>

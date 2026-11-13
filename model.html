@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Julian Whitney</title>
+<meta name="description" content="Julian Whitney: finance, FP&amp;A and AI-built tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a fixed 3D scale model behind a normal scrolling page. Each stop pins its text while the camera holds; gaps between stops are the camera moves. Rules in ~/design/DESIGN.md. Without 3D (body.flat) this is a plain page. */
+:root{--air:#C7CFD3;--ink:#172026;--soft:#3D4A52;--brass:#6A4D10;--line:#8E9AA0;color-scheme:light}
+*{box-sizing:border-box}html{background:var(--air)}
+body{margin:0;background:var(--air);color:var(--ink);font:400 18px/1.5 "Instrument Sans",Helvetica,Arial,sans-serif;overflow-x:clip}
+a{color:var(--brass)}button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}body.flat #c,body.flat .tag{display:none}
+
+header{position:fixed;z-index:3;left:0;right:0;top:0;display:flex;align-items:center;gap:16px;padding:8px clamp(14px,3vw,40px);font-size:15px;background:rgba(199,207,211,.92)}
+header b{font-weight:600;white-space:nowrap}
+nav{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav ol{display:flex;gap:2px;margin:0;padding:0;list-style:none}
+nav a{display:block;padding:6px 9px;color:var(--soft);text-decoration:none;white-space:nowrap}
+nav a:hover{color:var(--ink)}nav a[aria-current=true]{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 #B6892F}
+#plain{color:var(--soft);white-space:nowrap;min-height:32px}#plain:hover{color:var(--ink)}body.flat #plain{display:none}
+
+.stop{position:relative;z-index:2;height:150vh;padding:72px clamp(14px,3vw,40px) 0;display:flex;align-items:flex-start;pointer-events:none}
+.gap{height:60vh}
+.panel{position:sticky;top:72px;width:min(30rem,100%);pointer-events:auto;background:rgba(199,207,211,.93);padding:18px 22px}
+#plaza .panel{width:100%;max-width:none;background:none;padding:0}
+#plaza h1{font:600 clamp(60px,11vw,172px)/.9 "Instrument Sans",sans-serif;letter-spacing:-.045em;margin:0 0 18px}
+#plaza .lede{max-width:34rem}
+.when{display:block;color:var(--brass);font-size:15px;margin-bottom:2px}
+h2{font:600 clamp(26px,2.6vw,34px)/1.1 "Instrument Sans",sans-serif;letter-spacing:-.025em;margin:0 0 10px}
+.big{display:block;font:600 clamp(58px,6.6vw,104px)/1 "Instrument Sans",sans-serif;letter-spacing:-.045em;color:var(--ink);margin:2px 0 10px}
+p{margin:0 0 12px;color:var(--soft)}.panel>:last-child{margin-bottom:0}
+dl{margin:0 0 12px;display:grid;gap:8px}dt{font-weight:600}dd{margin:0;color:var(--soft);font-size:16px;line-height:1.42}
+.fine{font-size:14px;line-height:1.4}
+.mark{font-size:15px;line-height:1.4;color:var(--brass);border-left:2px solid #B6892F;padding-left:10px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.acts button,.acts a{border:1px solid var(--ink);color:var(--ink);padding:6px 12px;min-height:38px;font-size:15px;text-decoration:none}
+.acts button:hover,.acts a:hover{background:var(--ink);color:var(--air)}
+code{font:500 17px "Instrument Sans",sans-serif;overflow-wrap:anywhere}
+.tag{position:fixed;z-index:1;left:0;top:0;font-size:13px;line-height:1;font-weight:500;color:var(--ink);text-decoration:none;background:rgba(244,246,246,.92);padding:6px 8px;white-space:nowrap;opacity:0;pointer-events:none}
+
+dialog{background:var(--air);color:var(--ink);border:0;padding:14px;width:min(960px,94vw)}
+dialog::backdrop{background:rgba(23,32,38,.7)}
+dialog video{width:100%;display:block;background:#000}
+dialog .top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px;font-weight:600}
+dialog p{margin:10px 0 0;font-size:15px}dialog button{min-height:32px;font-weight:400}
+
+body.flat main{max-width:720px;margin:0 auto;padding-top:64px}
+body.flat .stop{height:auto;display:block;padding:18px 20px}body.flat .gap{display:none}
+body.flat .panel{position:static;width:100%;background:none;padding:0}
+@media(max-width:760px){
+  header{flex-wrap:wrap;gap:0 12px;padding:6px 12px 2px}nav{order:3;flex:0 0 100%}
+  .stop{padding:88px 12px 0;height:145vh}.panel{top:88px;padding:12px 14px}.tag{display:none}
+  p,dd{font-size:16px;line-height:1.42}
+  body.flat main{padding-top:80px}
+}
+</style></head><body class="flat">
+<canvas id="c" aria-hidden="true"></canvas>
+<header><b id="who"></b><nav aria-label="Stops"><ol id="navl"></ol></nav><button type="button" id="plain">Plain version</button></header>
+<main id="main"></main>
+<dialog id="demo" aria-labelledby="demoT"><div class="top"><span id="demoT"></span><button type="button" id="demoX">Close</button></div><video controls playsinline muted preload="none"></video><p id="demoC"></p></dialog>
+<noscript><p style="padding:90px 20px">This page needs JavaScript. Email: julianwhitney@alumni.wfu.edu</p></noscript>
+<script src="world-content.js"></script>
+<script>
+/* Words first, so the page works even if 3D never loads. */
+(()=>{
+  const W=window.WORLD,main=document.getElementById("main"),navl=document.getElementById("navl"),esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  document.getElementById("who").textContent=W.name;
+  W.stops.forEach((s,i)=>{
+    navl.insertAdjacentHTML("beforeend",`<li><a href="#${s.id}">${esc(s.nav)}</a></li>`);
+    let h=i?`<span class="when">${esc(s.when)}</span><h2>${esc(s.title)}</h2>`:`<h1>${esc(s.title)}</h1>`;
+    if(s.figure)h+=`<span class="big">${esc(s.figure)}</span>`;
+    h+=`<p class="lede">${esc(s.lede)}</p>`;
+    if(s.draft)h+=`<p class="mark" style="max-width:34rem">Draft wording, waiting on Julian's OK.</p>`;
+    if(s.terms)h+=`<dl>${s.terms.map(t=>`<div><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join("")}</dl>`;
+    if(s.soon)h+=`<p class="mark">${esc(s.soon)}</p>`;
+    if(s.demos)h+=`<div class="acts">${s.demos.map((d,n)=>`<button type="button" data-s="${i}" data-n="${n}">${esc(d.label)}</button>`).join("")}</div>`;
+    if(s.fine)h+=`<p class="fine">${esc(s.fine)}</p>`;
+    if(s.email)h+=`<p><code id="em">${esc(s.email)}</code></p><div class="acts"><button type="button" id="copy">Copy email</button><a href="mailto:${esc(s.email)}">Send email</a>${s.linkedin?`<a href="${esc(s.linkedin)}" rel="noopener">LinkedIn</a>`:""}</div>${s.linkedin?"":`<p class="mark">LinkedIn link needed.</p>`}`;
+    main.insertAdjacentHTML("beforeend",`<section class="stop" id="${s.id}" aria-label="${esc(s.nav)}"><article class="panel">${h}</article></section>`+(i<W.stops.length-1?`<div class="gap" aria-hidden="true"></div>`:""));
+  });
+  const dlg=document.getElementById("demo"),vid=dlg.querySelector("video");
+  main.addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){const d=W.stops[+b.dataset.s].demos[+b.dataset.n];document.getElementById("demoT").textContent=d.label;document.getElementById("demoC").textContent=d.cap;vid.src=d.src;dlg.showModal();vid.play().catch(()=>{});}
+    if(e.target.id==="copy"&&navigator.clipboard)navigator.clipboard.writeText(document.getElementById("em").textContent).then(()=>{e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy email",1400);});});
+  document.getElementById("demoX").addEventListener("click",()=>dlg.close());
+  dlg.addEventListener("close",()=>{vid.pause();vid.removeAttribute("src");vid.load();});
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+<script src="model.js"></script>
+</body></html>
