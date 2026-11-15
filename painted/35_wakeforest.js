@@ -7,6 +7,7 @@
 const G=-2,ZF=-13.3,ZT=-14.6,LAMPS=[];[1,-2,-5,-8,-11].forEach(z=>[-3.75,3.75].forEach(x=>LAMPS.push([x,z])));
 const OAKS=[];for(let z=1.6;z>-12;z-=2.5)[-4.7,4.7].forEach((x,i)=>OAKS.push([x+(i?.15:-.1)*Math.sin(z),z,1.15+.15*Math.sin(z*1.7+i)]));
 const CHAPEL=[0,4.85,ZT];
+let bell=-9; /* touch: the tower answers, the swifts scatter and come back */
 /* a willow-oak canopy: dark mass first, then lit clumps on the sun side (left), then a few bright leaf flecks */
 function oak(c,e,r,x,z,R){const{P}=e,u=e.u(z),t=P(x,G,z),top=P(x,G+1.55,z);
   PAINT.helpers.shadow(c,t[0]+u*.25,t[1],u*.9,u*.16,.5,"14,20,10");
@@ -104,9 +105,13 @@ PAINT.scene({id:"p-wfu",win:CUTW("wfu"),s:[.662,.75],refZ:-6,
       OAKS.filter(o=>o[1]>=-5.5).forEach(([x,z,R])=>oak(c,e,r,x,z,R));
       LAMPS.filter(l=>l[1]>=-5.5).forEach(([x,z])=>post(c,e,x,z));}},
   ],
-  live(g,e,H,i){const{P,T,lp}=e;
-    if(i===0){/* chimney swifts circling the chapel tower at dusk */{const b=P(0,4.2,ZT);H.flock(g,e,12,b[0]/e.W,b[1]/e.H,.06,.04,2.6*e.dpr,"rgba(30,26,30,.8)",1.6,5);}
-      /* the belfry lights come on */const b=P(...CHAPEL),u=e.u(ZT);H.glow(g,"255,214,150",b[0],b[1],u*.6,.35+.45*H.sm(.2,.7,lp));}
+  cue:"the chapel tower",
+  poke(e){bell=e.T;return true;},
+  hot(x,y,e){const a=e.P(-1,6.8,ZT),b=e.P(1,1,ZT);return x>a[0]&&x<b[0]&&y>a[1]&&y<b[1];},
+  tap(x,y,e){if(!this.hot(x,y,e))return false;bell=e.T;return true;},
+  live(g,e,H,i){const{P,T,lp}=e,bk=T>=bell?Math.exp(-(T-bell)/1.5):0;
+    if(i===0){/* chimney swifts circling the chapel tower at dusk */{const b=P(0,4.2,ZT);H.flock(g,e,12,b[0]/e.W,b[1]/e.H-.05*bk,.06*(1+3*bk),.04*(1+2.5*bk),2.6*e.dpr,"rgba(30,26,30,.8)",1.6,5);}
+      /* the belfry lights come on */const b=P(...CHAPEL),u=e.u(ZT);H.glow(g,"255,214,150",b[0],b[1],u*(.6+.9*bk),Math.min(1,.35+.45*H.sm(.2,.7,lp)+.6*bk));}
     if(i===1||i===2){/* students on the walks */
       for(let k=0;k<6;k++){const side=k%2?3.95:-3.55,dir=k%3?1:-1,span=i===1?[-11.5,-5.5]:[-5.5,1.5],z=span[0]+((k*2.3+T*.16*dir)%6+6)%6,zz=Math.min(span[1],Math.max(span[0],z));
         if(zz>e.cam.z-1)continue;const f=P(side,G,zz),u=e.u(zz),h=u*.3,bob=Math.sin(T*6+k)*u*.008;H.cast(g,f[0],f[1],h*.18,h,1.6,.08,.3,"14,20,10");g.fillStyle="rgba(28,22,20,.85)";g.fillRect(f[0]-h*.11,f[1]-h*.86+bob,h*.22,h*.6);g.beginPath();g.arc(f[0],f[1]-h*.94+bob,h*.09,0,7);g.fill();

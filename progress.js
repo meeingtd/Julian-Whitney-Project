@@ -66,6 +66,7 @@ window.PROGRESS=api=>{
 .pv2 .pr canvas{display:block;width:176px;height:103px;border-radius:3px;background:var(--panel);box-shadow:0 10px 30px rgba(0,0,0,.55)}
 .pv2 .nw{position:absolute;top:8px;left:0;white-space:nowrap;font:500 var(--t-xs)/1 var(--f-mono);letter-spacing:.02em;color:var(--ink);background:rgba(14,18,20,.78);padding:4px 7px;border-radius:2px;pointer-events:none; /* a dark backing: the label sits over pale scenes (sand, snow) */transition:opacity .2s ease-out}
 .pv2:hover .nw,.pv2.drag .nw{opacity:0}
+.pv2 .nw{display:none} /* Round 10: the board under the name is the one place label; this second one collided with the header */
 @media (max-width:760px){.pv2 .nw{top:110px;left:12px;transform:none!important;font-size:var(--t-xs)}}
 .pv2 .pr span{display:block;margin-top:6px;font:500 var(--t-xs)/1.3 var(--f-mono);color:var(--ink);text-align:center;text-shadow:0 0 8px var(--bg)}
 .pv2 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}

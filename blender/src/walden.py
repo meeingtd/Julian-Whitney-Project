@@ -146,7 +146,11 @@ def ice_mat(clear=True, name="ice"):
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
     nz = nt.nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = .09; nz.inputs["Detail"].default_value = 5; nz.inputs["Roughness"].default_value = .55
     nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"])
-    mask = nt.nodes.new("ShaderNodeMapRange"); nt.links.new(nz.outputs["Fac"], mask.inputs["Value"])
+    sepo = nt.nodes.new("ShaderNodeSeparateXYZ"); nt.links.new(tc.outputs["Object"], sepo.inputs["Vector"])
+    far_ = nt.nodes.new("ShaderNodeMapRange"); nt.links.new(sepo.outputs["Y"], far_.inputs["Value"])   # Blender y = -three z
+    far_.inputs["From Min"].default_value, far_.inputs["From Max"].default_value = 6, 10
+    nzf = nt.nodes.new("ShaderNodeMath"); nzf.operation = "MULTIPLY"; nt.links.new(nz.outputs["Fac"], nzf.inputs[0]); nt.links.new(far_.outputs["Result"], nzf.inputs[1])
+    mask = nt.nodes.new("ShaderNodeMapRange"); nt.links.new(nzf.outputs[0], mask.inputs["Value"])
     mask.inputs["From Min"].default_value, mask.inputs["From Max"].default_value = (.6, .64) if clear else (5, 6)
     col = nt.nodes.new("ShaderNodeMix"); col.data_type = "RGBA"; nt.links.new(mask.outputs["Result"], col.inputs["Factor"])
     col.inputs["A"].default_value = (.86, .87, .92, 1); col.inputs["B"].default_value = (.012, .014, .02, 1)
@@ -352,7 +356,7 @@ for i in range(1400):
 # ---- near: a white pine bough into the top left, snow on it; the edge of a drift at our feet -----------------------------------
 def drift(x, z):
     """A soft, low swell of wind-blown snow in front of us: it rises out of the pond and settles back before our feet."""
-    h = .24 * smooth(2.0, 3.8, z) - .24 * smooth(6.5, 9.0, z)
+    h = .24 * smooth(2.0, 3.8, z)     # a bank that runs on under our feet: no slope facing away from the sun
     h += .07 * noise.noise(Vector((x * .32, z * .32, 9))) * smooth(2.0, 3.8, z)
     return -1.996 + max(0., h)
 
@@ -371,7 +375,7 @@ def fade_back(m, z0, z1):
     return m
 
 
-grid("drift", -16, 16, 1.8, 9.5, .1, drift, fade_back(airy(ice_mat(False, "driftsnow")), 1.8, 2.9), "near")
+grid("drift", -16, 16, 1.8, 20, .1, drift, fade_back(airy(ice_mat(False, "driftsnow")), 1.8, 2.9), "near")
 
 # footprints from the beach out to where we stand: shallow dents, blue in their shade
 M_PRINT = airy(material("prints", (.42, .46, .62), .8))
@@ -419,7 +423,7 @@ def bough(p, ang, l, w, d):
     bough(q, ang - .45, l * .55, w * .55, d + 1)
 
 
-bough(V(-6.9, 4.0, 1), -.3, 2.1, .06, 0)
+bough(V(-6.5, 4.1, 1), -.3, 1.6, .05, 0)
 put(mesh_obj("bough", bm, M_TWIG), "near")
 put(mesh_obj("needles", needles, M_NEEDLE), "near")
 put(mesh_obj("bough_snow", snow_bm, M_SNOW), "near")
@@ -506,6 +510,9 @@ for key in SETS:
         for k2, c in coll.items():
             for o in c.all_objects:
                 o.visible_camera = (k2 == lay)
+                if k2 == "shore":                # gaps between the shore pines threw bright sun fans across the ice; the pond lies in even light
+                    o.visible_shadow = lay == "shore"
+        sun.specular_factor = .25 if lay in ("ice", "near") else 1   # unbroken, the sun's path on the ice blazed; keep it a soft sheen
         sc.render.filepath = os.path.join(OUT, f"{key}_{lay}.png")
         bpy.ops.render.render(write_still=True)
         print("RENDERED", key, lay, fr["res"])

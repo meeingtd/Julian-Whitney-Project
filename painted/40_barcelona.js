@@ -2,6 +2,7 @@
    built, its cranes turning. Its towers stand on the outline the globe's limb turns into (SIL.sagrada: towers at x -2.25, -.8, 0, .8, 2.25).
    Live: the cranes slew, swifts cut across the sky, steam rises off the cup, the morning light warms. */
 (()=>{
+const CR=[[-1.3,6.2,-2,.4],[1.9,5.6,-2.5,-.3]],slew=[0,0],want=[0,0];let lt=0; /* touch: a crane swings round */
 const TOWERS=[[-2.25,3.4,1,.56],[-1.55,2.6,1.2,.46],[-.8,3.9,1,.58],[0,4.7,-1,.8],[.8,3.9,1,.58],[1.55,2.6,1.2,.46],[2.25,3.4,1,.56]];
 PAINT.scene({id:"p-bcn",win:CUTW("bcn"),s:[.803,.85],refZ:0,
   /* one light: the morning sun low to the left; shadows fall right; the basilica and the hills sit back in sea haze */
@@ -95,9 +96,14 @@ PAINT.scene({id:"p-bcn",win:CUTW("bcn"),s:[.803,.85],refZ:0,
       c.fillStyle="rgba(255,236,200,.7)";c.fillRect(cp[0]-u*.09,cp[1]-u*.17,u*.02,u*.12);
     }}
   ],
+  cue:"a crane",
+  poke(e){want[0]+=2.1;if(e.T===0)slew[0]=want[0];return true;},
+  hot(x,y,e){return CR.findIndex(([cx,h,z])=>{const b=e.P(cx,-.4,z),t=e.P(cx,h,z),u=e.u(z);return x>t[0]-u*2.6&&x<t[0]+u*2.6&&y>t[1]-u*.7&&y<b[1]&&(Math.abs(x-t[0])<u*.5||y<t[1]+u*1.7);})+1;},
+  tap(x,y,e){const k=this.hot(x,y,e);if(!k)return false;want[k-1]+=2.1;if(e.T===0)slew[k-1]=want[k-1];return true;},
   live(g,e,H,i){const{P,T}=e;
     if(i===0){/* tower cranes beside the basilica, slewing slowly, a load on the hook */
-      [[-1.3,6.2,-2,.4],[1.9,5.6,-2.5,-.3]].forEach(([x,h,z,ph],k)=>{const b=P(x,-.4,z),t=P(x,h,z),u=e.u(z),ang=Math.sin(T*.07+ph)*1.0,jib=u*2.4*Math.cos(ang),cj=-u*.8*Math.cos(ang);
+      const d=Math.min(.05,Math.max(0,T-lt));lt=T;
+      CR.forEach(([x,h,z,ph],k)=>{slew[k]+=(want[k]-slew[k])*(1-Math.exp(-d*1.6));const b=P(x,-.4,z),t=P(x,h,z),u=e.u(z),ang=Math.sin(T*.07+ph)*1.0+slew[k],jib=u*2.4*Math.cos(ang),cj=-u*.8*Math.cos(ang);
         g.strokeStyle="#c9a227";g.lineWidth=Math.max(1,u*.05);g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(t[0],t[1]);g.stroke();
         g.lineWidth=Math.max(.6,u*.015);for(let y=b[1];y>t[1];y-=u*.18){g.beginPath();g.moveTo(b[0]-u*.06,y);g.lineTo(b[0]+u*.06,y-u*.18);g.stroke();}
         g.lineWidth=Math.max(1,u*.04);g.beginPath();g.moveTo(t[0]+cj,t[1]);g.lineTo(t[0]+jib,t[1]);g.stroke();g.fillStyle="#6b6a66";g.fillRect(t[0]+cj-u*.1,t[1],u*.2,u*.12);

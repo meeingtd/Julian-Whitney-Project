@@ -204,10 +204,40 @@ dialog::backdrop{background:var(--bg)}
 #desk canvas{width:100%!important;height:100%!important;display:block;opacity:0;transition:opacity 1.2s var(--ease)}
 #desk.ready canvas{opacity:1}
 .live #deskline{transition:opacity .4s ease-out}
+/* The lens (Round 10): one quiet question at the desk; the answer changes the trip's length, its words and which project leads. Accent = selected. */
+.live .ch .lens{margin-top:12px;font:500 var(--t-m)/1.5 var(--f-display);color:var(--ink2)}
+.lens button{font:inherit;color:var(--ink);border-bottom:1px solid var(--muted);padding:6px 0;min-height:24px}.lens button:hover{border-bottom-color:var(--accent)}
+.lens button[aria-pressed="true"]{border-bottom-color:var(--accent)}
+.live #deskline.on .lens button{pointer-events:auto}
+.lensb{color:var(--muted);margin-right:20px}.lensb:hover{color:var(--ink)}
+#places{display:none} /* Round 10: the hot-spot dots had no visible job; they return as real things to touch */
+@media (max-width:760px){.lensb{display:none}}
+@media (max-width:600px){#tcue{top:calc(96px + env(safe-area-inset-top,0px))}}
 .live #deskline.on{opacity:1;transition:opacity 1.6s .6s var(--ease)}
 #veil{position:fixed;inset:0;z-index:4;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .2s ease-out}
 .cue{left:max(20px,env(safe-area-inset-left,0px));bottom:20px;color:var(--muted);pointer-events:none;display:none}
 .live .cue{display:block}
+
+/* Projects on the desk: one project per stage, lying on the walnut from the opening; scroll slides along the wood. */
+#dstage{position:fixed;inset:0;z-index:1;display:none;overflow:hidden;background:#24160e;--dw:min(92vw,1240px);--paper:#f1eee6;--warm:#F3E6D6;--warm2:#CDB8A0}
+#dstage .wood{position:absolute;inset:0;width:100%;height:100%}
+.dtrack{position:absolute;inset:0;will-change:transform}
+.dthing{position:absolute;top:0;bottom:0;width:var(--dw);left:calc(50% - var(--dw)/2);display:grid;grid-template-columns:1.25fr 1fr;align-items:center;gap:clamp(24px,5vw,80px);padding:96px clamp(20px,5vw,72px) 72px}
+.fan{position:relative;display:block;width:100%;aspect-ratio:16/10.4;cursor:pointer}
+.fan img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left;border:10px solid var(--paper);background:var(--paper);box-shadow:0 30px 50px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4);transition:transform .2s ease-out}
+.fan img:nth-child(1){transform:translate(5%,5%) rotate(4.5deg)}.fan img:nth-child(2){transform:translate(-4%,2.5%) rotate(-4deg)}.fan img:nth-child(3){transform:rotate(-1.4deg)}
+.dthing:nth-child(even) .fan img:nth-child(1){transform:translate(-5%,5%) rotate(-5deg)}.dthing:nth-child(even) .fan img:nth-child(2){transform:translate(4.5%,2%) rotate(3.4deg)}.dthing:nth-child(even) .fan img:nth-child(3){transform:rotate(1.2deg)}
+.fan:hover img:nth-child(1),.fan:focus-visible img:nth-child(1){transform:translate(9%,8%) rotate(7deg)}.fan:hover img:nth-child(2),.fan:focus-visible img:nth-child(2){transform:translate(-8%,5%) rotate(-6.5deg)}
+.fan:focus-visible{outline:2px solid var(--accent);outline-offset:14px}
+.dtxt{color:var(--warm);text-shadow:0 1px 14px rgba(20,10,4,.6)}
+.dtxt h2{margin:0;font:500 clamp(34px,4.4vw,64px)/1.05 var(--f-display);text-wrap:balance}
+.dtxt p{margin:14px 0 0;font:400 var(--t-l)/1.45 var(--f-display);max-width:38ch;text-wrap:pretty}
+.dtxt .go{margin-top:22px;display:inline-flex;min-height:32px;align-items:center;color:var(--warm);border-bottom:1px solid var(--accent);padding:4px 0}
+.dtxt .go:hover{color:#fff}
+.dtxt .cnt{display:block;margin-top:26px;color:var(--warm2)}
+@media (max-width:760px){.dthing{grid-template-columns:1fr;align-content:center;gap:34px;padding:104px 24px 84px}.fan{max-width:min(100%,52vh);justify-self:center}.dtxt p{font-size:var(--t-m)}}
+@media (prefers-reduced-motion:reduce){.fan img{transition:none}}
+#tcue{right:max(20px,env(safe-area-inset-right,0px));top:calc(58px + env(safe-area-inset-top,0px));color:var(--ink);opacity:0;pointer-events:none;transition:opacity .2s ease-out;text-shadow:0 1px 8px rgba(8,10,14,.6)}
 html.in-pane .cue{visibility:hidden}
 .flatname{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0} /* the page's heading: read by screen readers on the live page, shown on the static page */
 .static .flatname{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;display:block;font:800 var(--t-3xl)/1 var(--f-name);font-stretch:125%;margin:0;padding:32px 20px 0;text-transform:uppercase}
@@ -252,7 +282,7 @@ html.in-pane .cue{visibility:hidden}
 
 <header class="ui top">
   <button type="button" class="logo mono" data-open="about">Julian Whitney</button>
-  <div class="talk mono"><a href="https://www.linkedin.com/in/julian-whitney/" target="_blank" rel="noopener" class="ln">LinkedIn</a><button type="button" data-open="talk">Let's talk <i aria-hidden="true">+</i></button></div>
+  <div class="talk mono"><button type="button" id="lensBtn" class="lensb" hidden></button><a href="https://www.linkedin.com/in/julian-whitney/" target="_blank" rel="noopener" class="ln">LinkedIn</a><button type="button" data-open="talk">Let's talk <i aria-hidden="true">+</i></button></div>
 </header>
 
 <h1 class="flatname">Julian Whitney</h1>
@@ -262,8 +292,8 @@ html.in-pane .cue{visibility:hidden}
    zooms into the picture inside it, which is the next scene (see cutFX). li/lo are unused since the flares were retired. */
 window.CUT={
   walden:{a:.16,b:.222,li:[.5,.5],lo:[.53,.57]},
-  drive:{a:.222,b:.29,li:[.53,.57],lo:[.5,.5]},
-  bos:{a:.29,b:.35,li:[.5,.5],lo:[.5,.3]},
+  tennis:{a:.222,b:.29,li:[.53,.57],lo:[.5,.5]},
+  boston:{a:.29,b:.35,li:[.5,.5],lo:[.5,.3]},
   doha:{a:.41,b:.472,li:[.5,.5],lo:[.5,.42]},
   dunes:{a:.472,b:.58,li:[.5,.42],lo:[.55,.42]},
   wfu:{a:.662,b:.75,li:[.5,.5],lo:[.5,.4]},
@@ -288,13 +318,14 @@ window.CUTW=k=>{const c=CUT[k],mi=CUTMODE(c.a),mo=CUTMODE(c.b);return[mi==="reve
 <svg id="morph" aria-hidden="true"><path/></svg>
 <p id="bigname" aria-hidden="true"><span>Julian</span><span>Whitney</span></p>
 <article id="story" aria-label="Julian's story">
-  <section class="ch" id="deskline"><p>You never know who you're going to meet, or where you're going to meet them.</p></section>
+  <section class="ch" id="deskline"><p>You never know who you're going to meet, or where you're going to meet them.</p>
+    <p class="lens" id="lensAsk" hidden>Here for <button type="button" data-lens="finance">finance</button>, for <button type="button" data-lens="builder">building</button>, or <button type="button" data-lens="curious">just curious</button>?</p></section>
   <section class="ch" data-a=".02" data-b=".125"><p>I got into building things young. It started with Legos, and I've been putting things together ever since.</p></section>
-  <section class="ch" data-a=".178" data-b=".214"><p>I was born in Concord, Massachusetts. I love my roots here, and we moved all around the state.</p></section>
-  <section class="ch" data-a=".415" data-b=".44"><p>Around 7, we moved to Doha, Qatar, for four years. There was a lot of traveling, and I got to see the world.</p></section>
-  <section class="ch" data-a=".45" data-b=".468"><p>School was Lycée Bonaparte, fully French, every day. I'm still fluent.</p></section>
-  <section class="ch" data-a=".49" data-b=".555"><p>We would take the cars out into the dunes a lot, and I started driving super young out there.</p></section>
-  <section class="ch" data-a=".585" data-b=".632"><p>At 11, I came back to Concord. People were a little different, and I had to get used to it.</p></section>
+  <section class="ch" data-a=".178" data-b=".214" data-builder="I got into building things young. It started with Legos, and I've been putting things together ever since."><p>I was born in Concord, Massachusetts. I love my roots here, and we moved all around the state.</p></section>
+  <section class="ch" data-a=".428" data-b=".459"><p>School was Lycée Bonaparte, fully French, every day. I'm still fluent.</p></section>
+  <section class="ch" data-a=".49" data-b=".516"><p>Around 7, we moved to Doha, Qatar, for four years. There was a lot of traveling, and I got to see the world.</p></section>
+  <section class="ch" data-a=".536" data-b=".562"><p>We would take the cars out into the dunes a lot, and I started driving super young out there.</p></section>
+  <section class="ch" data-a=".238" data-b=".276"><p>At 11, I came back to Concord. People were a little different, and I had to get used to it.</p></section>
   <section class="ch" data-a=".68" data-b=".74"><p>Then four years in North Carolina at Wake Forest: economics, with a minor in entrepreneurship.</p></section>
   <section class="ch" data-a=".798" data-b=".845"><p>In fall 2024 I spent a semester abroad in Barcelona, studying international finance and marketing.</p></section>
   <section class="ch" data-a=".918" data-b=".952"><p>Where I'm pushing next: investment banking in New York.</p></section>
@@ -309,7 +340,8 @@ window.CUTW=k=>{const c=CUT[k],mi=CUTMODE(c.a),mo=CUTMODE(c.b);return[mi==="reve
 
 <div class="ui now" id="now" aria-hidden="true"><span class="k mono" id="nowK"></span><span class="t" id="nowT"></span><span class="g" id="nowG"></span></div>
 <div class="ui cue mono" id="cue" aria-hidden="true">Scroll</div>
-<div class="ui hint mono" id="hint" aria-hidden="true"><span>Scroll to move</span><span id="hintB">Select a panel to open</span></div>
+<div class="ui mono" id="tcue" aria-hidden="true"></div>
+<div class="ui hint mono" id="hint" aria-hidden="true"><span>Scroll to move</span><span id="hintB">Select a project to open</span></div>
 <div class="bar" id="bar"></div>
 <div id="cursor" class="mono" aria-hidden="true"><i>+</i><span id="cursorL"></span></div>
 <div id="loader" class="mono" aria-hidden="true"><span id="loaderT">Loading</span></div>
@@ -1091,7 +1123,7 @@ function scene(){
   }
   /* Progress across the story. The indicator itself lives in progress.js (window.PROGRESS); the page hands it the story frames,
      the scroll mapping, and a way to grab a frame's live view for its prints. */
-  const FR=[["Night flight",null,null,"air","Cruising altitude"],["Building",0,.12,"globe","The world"],["Walden Pond",.12,.222,"walden","Walden Pond, Concord, MA"],["Route 2",.222,.29,"drive","Route 2, MA"],["Boston",.29,.362,"bos","Boston Logan Airport, MA"],["Doha",.362,.472,"doha","Lycée Bonaparte, Qatar"],["The dunes",.472,.585,"dunes","Doha, Qatar"],["Back to Concord",.585,.64,"globe","Concord, MA"],["Wake Forest",.64,.76,"wfu","WFU, NC"],["Barcelona",.76,.865,"bcn","Barcelona, ES"],["New York",.865,1,"ny","New York, NY"],["The path",null,null,"globe","Choose a place"],["Projects",null,null,"globe","My portfolio"]];
+  const FR=[["Night flight",null,null,"air","Cruising altitude"],["Building",0,.12,"globe","The world"],["Walden Pond",.12,.222,"walden","Walden Pond, Concord, MA"],["Back in Concord",.222,.29,"tennis","Concord, MA, at 11"],["School in Doha",.362,.472,"doha","Lycée Bonaparte, Qatar"],["The dunes",.472,.585,"dunes","Doha, Qatar"],["Back to Concord",.585,.64,"globe","Concord, MA"],["Wake Forest",.64,.76,"wfu","WFU, NC"],["Barcelona",.76,.865,"bcn","Barcelona, ES"],["Boston",.29,.362,"boston","Boston, MA"],["New York",.865,1,"ny","New York, NY"],["The path",null,null,"globe","Choose a place"],["Projects",null,null,"globe","My portfolio"]];
   const pAtStory=t=>{let a=PRE,b=STORY;for(let k=0;k<30;k++){const m=(a+b)/2;if(storyAt(SR(m))<t)a=m;else b=m;}return b;};
   const progress=window.PROGRESS({FR,PRE,STORY,pAtStory,scrollMax:()=>scrollMax(),getP:()=>p,busy:()=>cutNow||bl,
     cur:(s,q)=>cur0(s,q),span:()=>spanList(),u:()=>uS,goFrame:i=>goFrame(i),
@@ -1103,13 +1135,19 @@ function scene(){
   const ptr=new THREE.Vector2(0,0),cursor=document.getElementById("cursor"),cursorL=document.getElementById("cursorL");
   let px=0,py=0,mx=0,my=0,hover=null,indexHover=null,moved=false,q=0;
   const canHover=matchMedia("(hover:hover)").matches;
+  /* Phones: tilting the phone looks around inside a place, where the browser gives orientation without asking (iOS needs a permission prompt, not requested here). */
+  /* iPhones hand over orientation only after a prompt, and only from a tap: asked once, on the first tap into a place */
+  let tiltAsked=false;const askTilt=()=>{if(tiltAsked||canHover)return;tiltAsked=true;try{const D=window.DeviceOrientationEvent;if(D&&typeof D.requestPermission==="function")D.requestPermission().catch(()=>{});}catch(_){}};
+  let tiltBase=null;addEventListener("deviceorientation",e=>{if(canHover||e.gamma==null||mode!=="visit"||matchMedia("(prefers-reduced-motion:reduce)").matches){tiltBase=null;return;}
+    if(!tiltBase)tiltBase=[e.gamma,e.beta];px=Math.max(-1,Math.min(1,(e.gamma-tiltBase[0])/16));py=Math.max(-1,Math.min(1,-(e.beta-tiltBase[1])/16));});
   const ray=new THREE.Raycaster();
   addEventListener("pointermove",e=>{if(e.pointerType==="mouse"){moved=true;cursor.classList.add("live");}ptr.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);px=ptr.x;py=ptr.y;cursor.style.transform=`translate(${e.clientX+14}px,${e.clientY-8}px)`;});
   const pick=()=>{if(!drum.visible||q<.12)return null;ray.setFromCamera(ptr,cam);const hit=ray.intersectObjects(panels,false).find(h=>h.distance>2.2);return hit?hit.object:null;};
   addEventListener("click",e=>{
     if(e.target.closest("button,a,dialog,nav"))return;
     ptr.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);cam.updateMatrixWorld();drum.updateMatrixWorld();
-    const m=pick();if(m)openDialog(m.userData.id);
+    const m=pick();if(m){openDialog(m.userData.id);return;}
+    if(mode==="visit"&&!land&&window.PAINT){askTilt();PAINT.tap(e.clientX,e.clientY);} /* things in a place answer a touch (each scene's own tap) */
   });
   document.querySelectorAll(".index [data-open]").forEach(b=>{
     b.addEventListener("pointerenter",()=>indexHover=b.dataset.open);b.addEventListener("pointerleave",()=>indexHover=null);
@@ -1125,7 +1163,7 @@ function scene(){
   document.getElementById("skip").addEventListener("click",()=>mode==="intro"?leave(()=>goHub(1.4)):toProjects());
 
   /* Frame loop */
-  const cueEl=document.getElementById("cue"),bar=document.getElementById("bar"),nowEl=document.getElementById("now"),nowK=document.getElementById("nowK"),nowT=document.getElementById("nowT"),nowG=document.getElementById("nowG"),hintB=document.getElementById("hintB"),hintEl=document.getElementById("hint"),skip=document.getElementById("skip"),bigname=document.getElementById("bigname");
+  const tcue=document.getElementById("tcue"),cueEl=document.getElementById("cue"),bar=document.getElementById("bar"),nowEl=document.getElementById("now"),nowK=document.getElementById("nowK"),nowT=document.getElementById("nowT"),nowG=document.getElementById("nowG"),hintB=document.getElementById("hintB"),hintEl=document.getElementById("hint"),skip=document.getElementById("skip"),bigname=document.getElementById("bigname");
   const chapters=[...document.querySelectorAll("#story .ch:not(#deskline)")].map(el=>({el,a:+el.dataset.a,b:+el.dataset.b}));
   const buttons=[...document.querySelectorAll(".index [data-open]")];
 const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
@@ -1139,11 +1177,12 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
   /* Places. The globe is the hub: the intro ends on it, and each place is its own scroll through its stretch of the story (seg, in story
      time), so the visitor picks where to go. Every mode maps its own scroll (uS, 0..1) onto pieces of the old one-page scroll p, so all scenes,
      cuts, camera keys and lines work unchanged. A jump between pieces or modes is smoothed by a short camera blend (blendFrom). */
-  const VISITS={concord:{name:"Concord",ll:PLACE.concord,side:"u",seg:[[.12,.362],[.585,.636]]},doha:{name:"Doha",ll:PLACE.doha,seg:[[.362,.585]]},
-    "wake-forest":{name:"Wake Forest",ll:PLACE.nc,side:"d",seg:[[.64,.76]]},barcelona:{name:"Barcelona",ll:PLACE.barcelona,seg:[[.76,.865]]},
-    "new-york":{name:"New York",ll:PLACE.ny,side:"l",seg:[[.865,.975]]}};
+  /* Round 10: each place stands alone. A visit is one scene, entered and left inside its own window (after its opening cut has cleared, before its closing cut starts), so no globe, flight arc or wash belongs to a place. */
+  const VISITS={concord:{name:"Concord",ll:PLACE.concord,side:"u",seg:[[.176,.208],[.236,.278]]},doha:{name:"Qatar",ll:PLACE.doha,seg:[[.488,.566],[.426,.46]]},
+    "wake-forest":{name:"North Carolina",ll:PLACE.nc,side:"d",seg:[[.678,.736]]},barcelona:{name:"Spain",ll:PLACE.barcelona,seg:[[.806,.842]]},
+    boston:{name:"Boston",ll:PLACE.boston,seg:[[.303,.34]]},"new-york":{name:"New York",ll:PLACE.ny,side:"l",seg:[[.916,.951]]}};
   const HUBF=[8,-8],INTRO_END=.13,HUB_FR=FR.length-2,trackEl=document.getElementById("track"),veil=document.getElementById("veil"),backBtn=document.getElementById("back"),_hv=new THREE.Vector3();
-  let PTF=0,PATHVH=1000,mode="intro",here=null,pieces=[[0,1]],plen=1,uS=0,bl=null,leaving=false,lastPiece=0,lastIn=0;const seen=new Set();
+  let pj=null,PTF=0,PATHVH=1000,mode="intro",here=null,pieces=[[0,1]],plen=1,uS=0,bl=null,leaving=false,lastPiece=0,lastIn=0;const seen=new Set();
   const piecesOf=(m,v)=>m==="intro"?[[STORY,STORY]]:m==="hub"?[[STORY,1]]:(VISITS[v].flight?[[0,PRE]]:[]).concat(VISITS[v].seg.map(([a,b])=>[pAtStory(a),pAtStory(b)])); /* flight: the night flight (the old prelude) is the way into the place */
   const pieceAt=u=>{let d=Math.max(0,Math.min(1,u))*plen;for(let i=0;i<pieces.length;i++){const l=pieces[i][1]-pieces[i][0];if(d<=l||i===pieces.length-1)return[i,pieces[i][0]+Math.min(d,l)];d-=l;}};
   const pOfU=u=>pieceAt(u)[1];
@@ -1155,7 +1194,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
   function setMode(m,v,u0=0,blend=1.2){if(blend&&time>.3)blendFrom(blend);mode=m;here=v||null;pieces=piecesOf(m,v);plen=Math.max(1e-6,pieces.reduce((a,k)=>a+k[1]-k[0],0));
     const pv=m==="hub"&&SOL()?PATHVH:0;PTF=pv/(plen*1920+pv); /* the hub scroll: first the path through the places (flight.js), then the drum */
     if(typeof u0==="function")u0=u0(PTF);
-    trackEl.style.height=m==="intro"?"450vh":(plen*1920+pv+100).toFixed(2)+"vh";document.documentElement.dataset.mode=m;skip.firstChild.nodeValue=m==="intro"?"Skip intro ":"Projects ";
+    trackEl.style.height=m==="intro"?"450vh":m==="visit"?Math.max(300,plen*1920*2.4+100).toFixed(2)+"vh":(plen*1920+pv+100).toFixed(2)+"vh";document.documentElement.dataset.mode=m;skip.firstChild.nodeValue=m==="intro"?"Skip intro ":"Projects ";
     uS=u0;lastPiece=pieceAt(uDrum(u0))[0];p=pOfU(uDrum(u0));scrollTo(0,u0*scrollMax());leaving=false;}
   /* Leaving from inside a scene: a quick cover, so the painted view does not pop to the globe. Exits are shorter than entries. */
   function leave(fn){if(lastIn<.3){fn();return;}leaving=true;veil.style.opacity=1;setTimeout(()=>{fn();veil.style.opacity=0;},200);}
@@ -1163,10 +1202,26 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     if(SOL()){if(was==="intro")SOLAR.pull(d);else if(from){SOLAR.seen(from);SOLAR.back();}}
     if(VISITS[location.hash.slice(1)]){try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}}
     const k=kb&&(SOL()&&solButtons()?SOLB:HUBP).find(h=>h.id===from);if(k)setTimeout(()=>k.b.focus({preventScroll:true}),d*1000+50);}
-  function goVisit(id){if(mode==="visit"&&here===id)return;seen.add(id);if(SOL()){SOLAR.seen(id);if(!SOLAR.flying&&SOLAR.at<.999)SOLAR.jump(id);}setMode("visit",id,0,1.2);if(location.hash!=="#"+id)location.hash=id;}
-  window.placeRoute=id=>{if(VISITS[id]){goVisit(id);return true;}if(id===""&&mode==="visit"){leave(()=>goHub(.9));return true;}return false;};
-  backBtn.addEventListener("click",()=>leave(()=>goHub(.9)));
-  addEventListener("keydown",e=>{if(e.key==="Escape"&&mode==="visit"&&!document.querySelector("dialog[open]")&&!document.querySelector(".pv3.open"))leave(()=>goHub(.9));});
+  function goVisit(id,bd=1.2){if(mode==="visit"&&here===id)return;seen.add(id);if(SOL()){SOLAR.seen(id);if(!SOLAR.flying&&SOLAR.at<.999)SOLAR.jump(id);}setMode("visit",id,0,bd);if(location.hash!=="#"+id)location.hash=id;}
+  window.__PTF=()=>PTF;
+  /* The lens: who is visiting. Set by a tailored link (?for=finance|builder|curious), else by the question at the desk, else unset (the whole trip).
+     stops: the places the path settles at and names; lead: the project the drum opens on; words: caption variants (data-<lens> on a chapter). */
+  const LENSES={curious:{label:"Just curious",stops:null,lead:null,vh:1000},builder:{label:"Building",stops:["concord","wake-forest","new-york"],lead:"homebase",vh:800},finance:{label:"Finance",stops:["boston","new-york"],lead:"hexcel",vh:600}};
+  const LALIAS={recruiter:"finance",ib:"finance",banking:"finance",founder:"builder",build:"builder",building:"builder",all:"curious"};
+  let lens=null;const lensBtn=document.getElementById("lensBtn"),lensAsk=document.getElementById("lensAsk"),lensOf=()=>LENSES[lens||"curious"],isStop=id=>!lensOf().stops||lensOf().stops.includes(id);
+  function setLens(k,keep){k=LALIAS[k]||k;if(!LENSES[k])return;lens=k;if(keep)try{localStorage.setItem("lens",k);}catch(_){}
+    try{DST.relens();}catch(_){} /* DST is declared further down; before that there is nothing to re-order */lensBtn.hidden=false;lensBtn.textContent=LENSES[k].label;lensBtn.setAttribute("aria-label","Viewing as: "+LENSES[k].label+". Change");
+    lensAsk.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lens===k));
+    chapters.forEach(c=>{const p=c.el.querySelector("p");if(!c.el.dataset.curious)c.el.dataset.curious=p.textContent;p.textContent=c.el.dataset[k]||c.el.dataset.curious;});
+    const was=PATHVH;PATHVH=LENSES[k].vh;if(mode==="hub"&&was!==PATHVH&&PTF>0&&q<.01){const f=uS/PTF;setMode("hub",null,pf=>pf*Math.min(1,f),0);}}
+  lensAsk.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>setLens(b.dataset.lens,true)));
+  lensBtn.addEventListener("click",()=>{const ks=Object.keys(LENSES);setLens(ks[(ks.indexOf(lens)+1)%ks.length],true);});
+  {const u=new URLSearchParams(location.search).get("for");let st=null;try{st=localStorage.getItem("lens");}catch(_){}
+    if(u&&LENSES[LALIAS[u]||u])setLens(u,true);else{lensAsk.hidden=false;if(st)setLens(st);}}
+  window.placeRoute=id=>{if(VISITS[id]){goVisit(id);return true;}if(id===""&&mode==="visit"){liftOff();return true;}return false;};
+  backBtn.addEventListener("click",()=>liftOff());
+  addEventListener("keydown",e=>{if(e.key==="Escape"&&mode==="visit"&&!document.querySelector("dialog[open]")&&!document.querySelector(".pv3.open"))liftOff();
+    /* keyboard: Enter or Space does what a touch on the scene does */if((e.key==="Enter"||e.key===" ")&&mode==="visit"&&!land&&window.PAINT&&!e.target.closest("button,a,input,textarea,select,dialog,nav")&&PAINT.poke())e.preventDefault();});
   /* The board and timeline follow the mode: which frame is up, and the frames inside this mode's scroll. */
   const cur0=(s,q)=>mode==="hub"?(q>.05?FR.length-1:HUB_FR):mode==="intro"?1:null;
   const frameP=i=>i===0?[0,PRE]:FR[i][1]===null?null:[pAtStory(FR[i][1]),pAtStory(FR[i][2])];
@@ -1175,7 +1230,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     pieces.forEach(([a,b])=>{FR.forEach((f,i)=>{const r=frameP(i);if(!r)return;const x=Math.max(a,r[0]),y=Math.min(b,r[1]);if(y-x>1e-6)list.push({i,a:(off+x-a)/plen,b:(off+y-a)/plen});});off+=b-a;});
     return spanC={key,list};}
   function goFrame(i){const N=FR.length;if(i===0){goVisit("doha");return;}if(i===1){setMode("intro",null,0,0);return;}if(i===N-1){toProjects();return;}if(i===HUB_FR){goHub(1);return;}
-    const t=FR[i][1]+.012,id=Object.keys(VISITS).find(k=>VISITS[k].seg.some(([a,b])=>t>=a&&t<b));if(!id)return;goVisit(id);
+    const id=Object.keys(VISITS).find(k=>VISITS[k].seg.some(([a,b])=>a<FR[i][2]&&b>FR[i][1]));if(!id)return;const t=Math.max(FR[i][1]+.012,VISITS[id].seg[0][0]);goVisit(id);
     const u=uOfP(pAtStory(t));scrollTo(0,u*scrollMax());}
   const plenOf=m=>piecesOf(m).reduce((a,k)=>a+k[1]-k[0],0);
   /* Intro hand-off. The desk push ends with its globe at the hub globe's screen centre, with the hub globe's turn relative to the camera,
@@ -1204,12 +1259,34 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
   const solp=document.createElement("div");solp.id="solp";solp.setAttribute("role","group");solp.setAttribute("aria-label","Places");document.body.appendChild(solp);
   function solButtons(){if(SOLB||!SOL())return SOLB;SOLB=SOLAR.planets.map(k=>{const b=document.createElement("button");b.type="button";b.className="planet mono";b.tabIndex=-1;
     b.innerHTML="<span></span>";const sp=b.querySelector("span");sp.textContent=k.name;b.addEventListener("click",()=>{if(!SOLAR.dragged)enterPlanet(k.id);});solp.appendChild(b);return{id:k.id,b,s:sp,w:0,R:0};});return SOLB;}
-  function enterPlanet(id){if(solBusy||mode!=="hub"||!SOL()||SOLAR.flying||q>.02)return;solBusy=true;solTurned=true;
+  /* Landing (Round 10, the "porthole"). The place's scene shows inside the planet's own disc while the camera is still flying in, and the
+     disc then grows until the visitor is inside it: planet and place are one object the whole way. Lift-off is the same thing backwards. */
+  const RMQ=matchMedia("(prefers-reduced-motion:reduce)").matches,LSC={concord:["walden","tennis"],doha:["dunes","doha"],"wake-forest":["wfu"],barcelona:["bcn"],boston:["boston"],"new-york":["ny"]},LFLY=.46;let land=null,landK=1;
+  const rimEl=document.createElement("div");rimEl.setAttribute("aria-hidden","true");rimEl.style.cssText="position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0";document.body.appendChild(rimEl);
+  const landClear=el=>{rimEl.style.opacity=0;if(el)el.style.transform=el.style.clipPath=el.style.filter="";};
+  function liftOff(){if(land||mode!=="visit")return;if(!SOL()||!LSC[here]||RMQ){leave(()=>goHub(.9));return;}if(SOLAR.at<.999)SOLAR.jump(here); /* arrived by a deep link: the system has not flown here yet */leaving=true;land={id:here,lp:1,dir:-1,sc:LSC[here][Math.min(lastPiece,LSC[here].length-1)]};} /* lift off from whichever scene of the place is up */
+  function landFX(dt){if(!land){landK=1;return;}
+    const L=land,el=fxEl(L.sc),a=SOLAR.anchors().find(k=>k.id===L.id),W=innerWidth,H=innerHeight;
+    L.lp=L.dir>0?Math.min(1,L.lp+dt/2.6):Math.max(0,L.lp-dt/2);
+    if(L.dir>0&&L.lp>=1){land=null;solBusy=false;landK=1;landClear(el);return;}
+    if(L.dir<0&&L.lp<=LFLY){land=null;landClear(el);goHub(.9);return;}
+    const e=smooth(LFLY,1,L.lp),o=L.dir>0?smooth(.16,.38,L.lp):smooth(LFLY,.7,L.lp),cx=a.cx,cy=a.cy,rp=a.rp;
+    const R=rp*.985+(Math.hypot(Math.max(cx,W-cx),Math.max(cy,H-cy))*1.02-rp*.985)*e,k=Math.max(.2,2.5*rp/H)*(1-e)+e,dx=(cx-W/2)*(1-e),dy=(cy-H/2)*(1-e);
+    landK=smooth(.85,1,L.lp);
+    if(el){el.style.transformOrigin="50% 50%";el.style.transform=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${k.toFixed(4)})`; /* clip-path is in the box's own space, before the transform */
+      el.style.clipPath=`circle(${(R/k).toFixed(1)}px at ${(W/2+(cx-W/2-dx)/k).toFixed(1)}px ${(H/2+(cy-H/2-dy)/k).toFixed(1)}px)`;el.style.filter=o<.999?`opacity(${o.toFixed(3)})`:"";}
+    rimEl.style.opacity=(o*(1-e)).toFixed(3);rimEl.style.background=`radial-gradient(circle ${R.toFixed(1)}px at ${cx.toFixed(1)}px ${cy.toFixed(1)}px,transparent 55%,rgba(8,10,14,.5) 92%,rgba(8,10,14,.75) 99.5%,transparent 100%)`;}
+  /* Settle: when scrolling stops near a planet, the path eases to that planet's resting frame. */
+  let settleTm=0;addEventListener("scroll",()=>{clearTimeout(settleTm);if(mode!=="hub"||!SOL()||PTF<=0)return;settleTm=setTimeout(()=>{
+    if(mode!=="hub"||land||solBusy||bl||SOLAR.flying||document.querySelector("dialog[open]"))return;const m=scrollMax(),u=scrollY/m/PTF;if(u>.93)return;
+    let best=0,bd=1;SOLAR.planets.forEach(k=>{if(k.id==="projects"||!isStop(k.id))return;const x=SOLAR.uOf(k.id),d=Math.abs(x-u);if(d<bd){bd=d;best=x;}});if(bd>.003&&bd<.07)scrollTo({top:best*PTF*m,behavior:RMQ?"auto":"smooth"});},180);},{passive:true});
+  function enterPlanet(id){askTilt();if(solBusy||mode!=="hub"||!SOL()||SOLAR.flying||q>.02)return;solBusy=true;solTurned=true;
+    if(VISITS[id]&&LSC[id]&&!RMQ){SOLAR.fly(id);goVisit(id,0);land={id,lp:0,dir:1,sc:LSC[id][0]};return;}
     SOLAR.fly(id,()=>{solBusy=false;SOLAR.seen(id);if(id==="projects")toProjects();else goVisit(id);});}
   addEventListener("keydown",e=>{if(!SOL()||mode!=="hub"||!solLive||document.querySelector("dialog[open]")||document.querySelector(".pv3.open"))return;
     if(e.key==="Enter"&&!e.target.closest("button,a,input,textarea,select"))enterPlanet(SOLAR.focusId());});
   function placeSolar(dt){if(!SOL())return;solButtons();
-    const T=mode==="intro"?(uS>.8?1:0):mode==="hub"?1-smooth(.02,.07,q):0; /* comes up in .25 s, goes in .6 s (it fades as the place's first scene comes up) */
+    const T=land?1:mode==="intro"?(uS>.8?1:0):mode==="hub"?1-smooth(.02,.07,q):0; /* comes up in .25 s, goes in .6 s (it fades as the place's first scene comes up) */
     solA=T>solA?Math.min(T,solA+dt/.25):Math.max(T,solA-dt/.6);
     if(Math.abs(solA-solShown)>.002||(solA===0)!==(solShown===0)){solShown=solA;solEl.style.opacity=solA.toFixed(3);solEl.style.visibility=solA>0?"visible":"hidden";}
     if(mode==="intro")SOLAR.hold();
@@ -1222,7 +1299,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     SOLAR.anchors().forEach(a=>{const k=SOLB.find(x=>x.id===a.id),vis=lab&&!a.hidden&&a.cx>4&&a.cx<innerWidth-4,R=Math.max(22,a.rp); /* a planet off the side keeps no name */
       if(!k.w)k.w=k.s.offsetWidth;const hw=k.w/2,lx=Math.min(Math.max(a.cx,hw+12),innerWidth-hw-12)-a.cx; /* the name stays on screen */
       k.b.style.transform=`translate(${(a.cx-R).toFixed(1)}px,${(a.cy-R).toFixed(1)}px)`;if(Math.abs(k.R-R)>.5){k.R=R;k.b.style.width=k.b.style.height=(2*R).toFixed(1)+"px";}
-      k.s.style.transform=`translateX(calc(-50% + ${lx.toFixed(1)}px))`;k.b.style.opacity=vis?1:0;k.b.style.pointerEvents=vis?"auto":"none";k.b.tabIndex=vis?0:-1;
+      k.s.style.transform=`translateX(calc(-50% + ${lx.toFixed(1)}px))`;k.b.style.opacity=vis?(a.id==="projects"?1:(a.focus?1:a.near?.5:0)*(isStop(a.id)?1:.5)):0;k.b.style.pointerEvents=vis?"auto":"none";k.b.tabIndex=vis?0:-1; /* only the planet you are at is named */
       k.b.classList.toggle("far",!a.near);k.b.classList.toggle("focus",a.focus);k.b.classList.toggle("seen",a.seen);
       k.b.setAttribute("aria-label",a.id==="projects"?"Open projects":(a.seen?"Visited: ":"Visit ")+a.name);});}
   /* Hot spots: each landmark's 3D anchor is projected to the screen every frame; active only inside the city's window with no dialog open. */
@@ -1321,7 +1398,9 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     if(paneFrame(dt))return;
     const goal=Math.min(1,scrollY/scrollMax());
     uS+=(goal-uS)*(1-Math.exp(-dt*5));if(Math.abs(goal-uS)<1e-5)uS=goal;
-    {const[pi,pv]=pieceAt(uDrum(uS));if(mode==="hub"&&PTF>0&&SOL())SOLAR.u=Math.min(1,uS/PTF);if(pi!==lastPiece){lastPiece=pi;blendFrom(.9);}p=pv;}mx+=(px-mx)*(1-Math.exp(-dt*3));my+=(py-my)*(1-Math.exp(-dt*3));
+    {const[pi,pv]=pieceAt(uDrum(uS));if(mode==="hub"&&PTF>0&&SOL())SOLAR.u=Math.min(1,uS/PTF);if(pi!==lastPiece&&mode==="visit"&&!land&&!bl){ /* a place's next scene: the view dips to dark, swaps behind it, and comes back */
+      if(!pj){pj={t:time};veil.style.opacity=1;}if(time-pj.t>.24){lastPiece=pi;p=pv;pj=null;veil.style.opacity=0;}}
+    else{if(pj){pj=null;veil.style.opacity=0;}if(pi!==lastPiece){lastPiece=pi;blendFrom(.9);}p=pv;}}mx+=(px-mx)*(1-Math.exp(-dt*3));my+=(py-my)*(1-Math.exp(-dt*3));
     const s=mode==="visit"&&p<PRE&&VISITS[here].flight?VISITS[here].seg[0][0]:storyAt(SR(p)); /* during a place's flight the globe already waits at that place's approach */q=Math.max(0,(p-STORY)/(1-STORY));
 
     canSpin=s>=.975&&q<.1&&mode!=="intro"&&!SOL();placeSolar(dt);if(s<.975){spinT=tiltT=0;dragging=false;}spinV+=(spinT-spinV)*(1-Math.exp(-dt*7));tiltV+=(tiltT-tiltV)*(1-Math.exp(-dt*7));
@@ -1332,7 +1411,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     fitPortrait(sCam);
     const be=bl?ease(bl.t/bl.d):1;if(bl){tp.lerpVectors(bl.tp,tp,be);tl.lerpVectors(bl.tl,tl,be);}
     let still=1;MORPHS.forEach(m=>{still=Math.min(still,1-win(m.t0-(m.pre||0),m.t1+(m.post===undefined?.014:m.post),s,.004));});
-    const sway=(s>=1?1:.35)*still;
+    const sway=(s>=1?1:mode==="visit"?.85:.35)*still; /* inside a place the pointer looks around: layers shift by their depth */
     cam.position.set(tp.x+mx*.45*sway,tp.y+my*.25*sway,tp.z);
     look.set(tl.x+mx*.1*still,tl.y+my*.05*still,tl.z);cam.lookAt(look);placeSpots(s);
     cam.updateMatrixWorld();if(window.CONCORD)CONCORD.set(s,concordProj);if(window.PAINTED)PAINTED.forEach(f=>f(s,worldProj,cam.position));
@@ -1365,17 +1444,17 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     }
     /* Wake Forest: aerial, then the chapel draws itself and the photo comes up behind the lines, then the Calloway building. */
     /* The name lands in front of the finished world; scrolling on fades it and brings the panels forward. */
-    const spin=-(q*TAU*.92+time*.012);
+    const spin=-(q*TAU*.92+time*.012)+drumPhase(q);
     bigname.style.opacity=(mode==="intro"?0:bl?be:1)*smooth(.975,.998,s)*(1-smooth(.02,.1,q))*(1-.85*Math.min(1,Math.abs(Math.sin(spinV/2))*3));
-    chapters.forEach(c=>{c.el.style.opacity=win(c.a,c.b,s,.006);});
+    chapters.forEach(c=>{c.el.style.opacity=win(c.a,c.b,s,.006)*landK;});
     if(window.AIRPORT)AIRPORT.set(p/PRE);
-    cutFX(s);legoFrame(s,q);
+    cutFX(s);landFX(dt);legoFrame(s,q);
     const dk=window.DESK&&DESK.ready&&mode==="intro";cueEl.style.opacity=dk?1-smooth(.01,.05,uS):0;cueEl.textContent=mode!=="intro"?"Scroll":innerWidth<480?"Scroll or spin":small()?"Scroll, or spin the globe":"Scroll in, or spin the globe";deskLine.classList.toggle("on",!!dk&&uS<.06);
     if(SOL()&&mode==="hub"){cueEl.style.opacity=solLive&&!solTurned?1:0;cueEl.textContent=canHover?(innerWidth<600?"Scroll to travel":"Scroll to travel, or choose a planet"):innerWidth<480?"Swipe to travel":"Swipe to travel, or tap a planet";}
     if(solA>0)bigname.style.opacity=(+bigname.style.opacity*(1-solA)).toFixed(3);
 
     /* Drum */
-    drum.visible=q>.01;
+    DST.frame(q);drum.visible=false; /* the desk stage has taken the drum's place; the drum code stays for now */
     let near=null;
     if(drum.visible){
       drum.rotation.y=spin;
@@ -1385,15 +1464,15 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
       panels.forEach(m=>{let d=Math.abs(((m.userData.th+drum.rotation.y-Math.PI)%TAU+TAU*1.5)%TAU-Math.PI);if(d<best){best=d;near=m;}});
       const intro=smooth(.04,.16,q);
       panels.forEach(m=>{const u=m.material.uniforms,id=m.userData.id;
-        const tgt=m===hover?1:(indexHover===id?.9:(hover&&hover.userData.id===id?.45:(m===near?.5:0)));
+        const tgt=m===hover?1:(indexHover===id?.9:(hover&&hover.userData.id===id?.45:(m===near?.9:0))); /* Round 10: the panel in front is fully lit and readable; the rest recede */
         u.focus.value+=(tgt-u.focus.value)*(1-Math.exp(-dt*7));u.intro.value=intro;});
     }else hover=null;
     const arrived=smooth(.1,.18,q);
-    nowEl.style.opacity=arrived;skip.style.visibility=pn||(mode==="hub"&&q>.08)?"hidden":"visible";placeHub();
+    nowEl.style.opacity=0;skip.style.visibility=pn||(mode==="hub"&&q>.08)?"hidden":"visible";placeHub();
     if(bl){bl.t+=dt;if(bl.t>=bl.d)bl=null;}
-    if(!bl&&!leaving&&goal>=.999&&uS>.992){if(mode==="intro")goHub(1.6);else if(mode==="visit"){leaving=true;goHub(1);}}hintEl.style.opacity=arrived;
+    if(!bl&&!leaving&&goal>=.999&&uS>.992){if(mode==="intro")goHub(1.6);else if(mode==="visit")liftOff();}hintEl.style.opacity=arrived;
     showNow(q>=.1||indexHover?(indexHover||(hover&&hover.userData.id)||(near&&near.userData.id)):null);
-    cursorL.textContent=hover?"View "+info(hover.userData.id).short:"";cursor.classList.toggle("on",!!hover);document.documentElement.style.cursor=hover?"pointer":(canSpin?(dragging?"grabbing":"grab"):"");
+    cursorL.textContent=hover?"View "+info(hover.userData.id).short:"";const hot=!hover&&mode==="visit"&&!land&&moved&&window.PAINT&&PAINT.hot((px+1)/2*innerWidth,(1-py)/2*innerHeight);cursor.classList.toggle("on",!!hover||!!hot);{const c=mode==="visit"&&!land&&!pj&&window.PAINT?PAINT.cue():"",t=c?(canHover?"Click ":"Tap ")+c+(canHover?", or press Enter":""):"";if(t&&tcue.textContent!==t)tcue.textContent=t;tcue.style.opacity=t?.85:0;}document.documentElement.style.cursor=hover||hot?"pointer":(canSpin?(dragging?"grabbing":"grab"):"");
     bar.style.transform=`scaleX(${p})`;
     if(globe.visible){globe.updateMatrixWorld();oceanU.time.value=time;globe.getWorldQuaternion(_gq).invert();oceanU.sunO.value.copy(SUNV).applyQuaternion(cam.quaternion).applyQuaternion(_gq);cam.getWorldPosition(_gv);oceanU.camO.value.copy(globe.worldToLocal(_gv));}
     if(mode==="intro"&&!deskGone&&!window.DESK_FAIL&&!(window.DESK&&DESK.ready)&&performance.now()>10000)window.DESK_FAIL="desk did not start within 10 s"; /* a module that never loads (blocked or offline) must not leave the page frozen */
@@ -1403,7 +1482,34 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
     if(solA>=.999){legoCapture(s,q);return;} /* the system covers the page */
     renderer.render(sc,cam);legoCapture(s,q);
   }
-  if(!canHover)hintB.textContent="Tap a panel to open";
+  if(!canHover)hintB.textContent="Tap a project to open";
+  /* Projects on the desk (Round 11, take A): replaces the drum on screen. Five things in a row on the wood; q slides the row; each opens its dialog. */
+  const DST=(()=>{const el=document.createElement("div");el.id="dstage";el.innerHTML='<canvas class="wood" aria-hidden="true"></canvas><div class="dtrack"></div>';const mo=document.getElementById("morph");mo.parentNode.insertBefore(el,mo);
+    const tr=el.querySelector(".dtrack"),Q0=.2,QD=.185,things=[];let D=1,built=false,shown=false;
+    function wood(){const c=el.querySelector(".wood"),W=c.width=1600,H=c.height=1000,g=c.getContext("2d");let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+      const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#4a301f");bg.addColorStop(.5,"#3a2417");bg.addColorStop(1,"#24150d");g.fillStyle=bg;g.fillRect(0,0,W,H);
+      for(let i=0;i<1500;i++){const y=r()*H,x=r()*W,l=120+r()*700,a=.02+r()*.07,w=r()*6.3,amp=1+r()*5;g.strokeStyle=r()<.6?`rgba(18,9,4,${a})`:`rgba(214,150,100,${a*.6})`;g.lineWidth=.6+r()*1.6;g.beginPath();for(let k=0;k<=12;k++){const t=k/12;g.lineTo(x+t*l,y+Math.sin(w+t*3)*amp);}g.stroke();}
+      for(let i=0;i<9;i++){const x=r()*W,y=r()*H,n=6+r()*6|0;for(let k=0;k<n;k++){g.strokeStyle=`rgba(20,10,4,${.05+r()*.05})`;g.lineWidth=1.2;g.beginPath();g.ellipse(x,y,90+k*46,5+k*5,0,Math.PI,0);g.stroke();}}
+      [H*.36,H*.71].forEach(y=>{g.fillStyle="rgba(10,5,2,.45)";g.fillRect(0,y,W,1.5);g.fillStyle="rgba(230,170,120,.07)";g.fillRect(0,y+1.5,W,1);});
+      const lg=g.createRadialGradient(W*.22,H*.06,0,W*.22,H*.06,W*.62);lg.addColorStop(0,"rgba(255,206,140,.36)");lg.addColorStop(.5,"rgba(255,196,130,.1)");lg.addColorStop(1,"rgba(255,196,130,0)");g.fillStyle=lg;g.fillRect(0,0,W,H);
+      const vg=g.createRadialGradient(W/2,H*.45,H*.4,W/2,H*.45,W*.75);vg.addColorStop(0,"rgba(8,4,2,0)");vg.addColorStop(1,"rgba(8,4,2,.62)");g.fillStyle=vg;g.fillRect(0,0,W,H);}
+    function order(){const l=lensOf().lead;return l&&IDS.includes(l)?[l,...IDS.filter(x=>x!==l)]:IDS;}
+    function place(){D=Math.min(innerWidth*.96,1320);order().forEach((id,i)=>{const t=things.find(k=>k.id===id);if(!t)return;t.i=i;t.el.style.transform=`translate3d(${(i*D).toFixed(1)}px,0,0)`;t.cnt.textContent=(i+1)+" of "+IDS.length;});}
+    function build(){built=true;wood();IDS.forEach(id=>{const o=info(id),d=document.createElement("article");d.className="dthing";
+        const fan=document.createElement("button");fan.type="button";fan.className="fan";fan.dataset.open=id;fan.setAttribute("aria-label","Open "+o.short);
+        [...document.querySelectorAll(`img[data-p="${id}"]`)].slice(0,3).reverse().forEach(im=>{const k=document.createElement("img");k.src=im.src;k.alt="";k.decoding="async";fan.appendChild(k);});
+        const tx=document.createElement("div");tx.className="dtxt";const h=document.createElement("h2");h.textContent=o.title;const pp=document.createElement("p");pp.textContent=o.tag;
+        const go=document.createElement("button");go.type="button";go.className="go mono";go.dataset.open=id;go.textContent="Open "+o.short;const cnt=document.createElement("span");cnt.className="cnt mono";
+        tx.append(h,pp,go,cnt);d.append(fan,tx);tr.appendChild(d);const t={id,el:d,cnt,i:0};things.push(t);
+        [fan,go].forEach(b=>b.addEventListener("focus",()=>{if(b.matches(":focus-visible"))go2(t.i);}));});place();}
+    const topOf=i=>(PTF+(Q0+i*QD)*(1-PTF))*scrollMax();
+    function go2(i){scrollTo({top:topOf(i),behavior:RMQ?"auto":"smooth"});}
+    addEventListener("resize",()=>{if(built)place();});
+    let st=0;addEventListener("scroll",()=>{clearTimeout(st);if(!shown)return;st=setTimeout(()=>{if(!shown||mode!=="hub"||bl||document.querySelector("dialog[open]"))return;const qs=(scrollY/scrollMax()-PTF)/(1-PTF),i=Math.max(0,Math.min(IDS.length-1,Math.round((qs-Q0)/QD)));if(qs>.1&&Math.abs(topOf(i)-scrollY)>3)go2(i); /* from where the scroll is, not the eased value */},200);},{passive:true});
+    return{relens(){if(built)place();},frame(q){const a=mode==="hub"?smooth(.03,.13,q):0;if(a<=0){if(shown){shown=false;el.style.display="none";}return;}if(!built)build();if(!shown){shown=true;el.style.display="block";}
+        el.style.opacity=a.toFixed(3);tr.style.transform=`translate3d(${(-(q-Q0)/QD*D).toFixed(1)}px,0,0)`;}};})();
+  /* the drum opens on the lens's lead project: a fixed turn, taken while the drum is still out of sight */
+  let dph=null;function drumPhase(q){if(q<=.005){dph=null;return 0;}if(dph===null){const li=lensOf().lead?IDS.indexOf(lensOf().lead):-1,i=li<0?-1:[...panels.keys()].find(n=>n%IDS.length===li&&n%3===1);dph=i<0?0:-(i/panels.length*TAU)+.18*TAU*.92+time*.012;}return dph;}
   setMode("intro",null,0,0);frame();route();
 }
 </script>

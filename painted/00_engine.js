@@ -69,9 +69,13 @@ window.PAINT=(()=>{
     const s0=document.createElement("canvas");s0.width=s0.height=12;const q0=s0.getContext("2d");for(let y=0;y<12;y++)for(let x=0;x<12;x++){const v=r();q0.fillStyle=v<.5?`rgba(0,0,0,${(v*.22).toFixed(3)})`:`rgba(255,255,255,${((v-.5)*.14).toFixed(3)})`;q0.fillRect(x,y,1,1);}
     const m=document.createElement("canvas");m.width=m.height=300;const qm=m.getContext("2d");qm.imageSmoothingEnabled=true;qm.imageSmoothingQuality="high";qm.drawImage(s0,0,0,300,300);
     return TT={fine:c.createPattern(f,"repeat"),mottle:c.createPattern(m,"repeat")};}
-  const list=[];
+  const list=[],acts=[];
+  /* Touch: the page hands over a tap or the pointer's place (CSS px); the scene on screen answers through its own tap(x,y,env,H) and
+     hot(x,y,env,H), both in canvas px. The engine itself still listens to nothing. */
+  const ask=(fn,x,y)=>{for(const a of acts){const e=a.env();if(e&&a.def[fn]){const v=a.def[fn](x*e.dpr,y*e.dpr,e,H)||false;if(v&&fn==="tap")a.def._used=1;return v;}}return false;};
+  const cue=()=>{for(const a of acts){const e=a.env();if(e){const c=a.def._used?"":typeof a.def.cue==="function"?a.def.cue(e):a.def.cue;return c||"";}}return "";};
   function scene(def){
-    let box=null,cv,g,W=0,H2=0,dpr=1,t0=0,bakes=null,key="";
+    let box=null,cv,g,W=0,H2=0,dpr=1,t0=0,bakes=null,key="",cur=null;acts.push({def,env:()=>cur});
     const ensure=()=>{if(box)return;box=document.createElement("div");box.id=def.id;box.setAttribute("aria-hidden","true");box.style.cssText="display:none;position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;background:#0E1214";
       const m=document.getElementById("morph");m.parentNode.insertBefore(box,m);cv=document.createElement("canvas");cv.style.cssText="position:absolute;inset:0;width:100%;height:100%";box.appendChild(cv);g=cv.getContext("2d");t0=performance.now();};
     function size(){W=innerWidth;H2=innerHeight;dpr=Math.min(1.5,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H2*dpr);}
@@ -105,7 +109,7 @@ window.PAINT=(()=>{
       const [i0,i1,o0,o1]=def.win,a=sm(i0,i1,s)*(1-sm(o0,o1,s));
       if(def.plates&&s>i0-.08&&s<o1+.02)loadPlates();
       if(def._dirty){def._dirty=0;bakes=null;}
-      if(a<=.002||!proj){if(box){box.style.display="none";if(bakes&&(s<i0-.02||s>o1+.02)){bakes=null;key="";}}return;}
+      if(a<=.002||!proj){cur=null;if(box){box.style.display="none";if(bakes&&(s<i0-.02||s>o1+.02)){bakes=null;key="";}}return;}
       ensure();if(cv.width!==Math.round(innerWidth*Math.min(1.5,devicePixelRatio||1))||W!==innerWidth||H2!==innerHeight){size();bakes=null;}
       box.style.display="block";box.style.opacity=a.toFixed(3);
       /* re-bake when the camera has moved far enough that the stretch would show */
@@ -114,6 +118,7 @@ window.PAINT=(()=>{
       const T=still?0:(performance.now()-t0)/1000,lp=clamp((s-def.s[0])/(def.s[1]-def.s[0]));
       const P=(x,y,z)=>{const q=proj(x,y,z);return[q[0]*dpr,q[1]*dpr];};
       const env={W:cv.width,H:cv.height,dpr,T,lp,s,P,cam,u:(z)=>{const a=P(0,-2,z),b=P(1,-2,z);return Math.hypot(b[0]-a[0],b[1]-a[1]);}};
+      cur=a>.9?env:null;
       g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation="source-over";
       def.sky(g,env,H);
       def.layers.forEach((L,i)=>{const b=bakes[i],A=proj(0,-2,L.z),B=proj(1,-2,L.z);
@@ -154,6 +159,6 @@ window.PAINT=(()=>{
     const cvRef=()=>cv;
     list.push(set);return set;
   }
-  return{scene,helpers:H,list};
+  return{scene,helpers:H,list,poke:()=>{for(const a of acts){const e=a.env();if(e&&a.def.poke){a.def._used=1;return a.def.poke(e,H)||false;}}return false;},tap:(x,y)=>ask("tap",x,y),hot:(x,y)=>ask("hot",x,y),cue};
 })();
 window.PAINTED=PAINT.list;

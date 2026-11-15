@@ -4,6 +4,8 @@
    on toward us, and the cut goes into those lights (CUTX .222). World: ice at y -2 from z 3 back to the shore at z -30; ridge to z -60. */
 (()=>{
 const SHORE=-30,CAR=[1.5,-1.86,-27.5];
+const stones=[]; /* touch: a stone skimmed out across the ice */
+function iceAt(x,y,e){let a=SHORE+1,b=Math.min(3,e.cam.z-2.5);if(y<=e.P(0,-2,a)[1])return null;for(let k=0;k<26;k++){const m=(a+b)/2;if(e.P(0,-2,m)[1]<y)a=m;else b=m;}const p0=e.P(0,-2,a)[0],p1=e.P(1,-2,a)[0];return[(x-p0)/((p1-p0)||1),a];}
 const ridge=(x,k)=>Math.sin(x*.11+k)*1.1+Math.sin(x*.27+k*2)*.5+Math.sin(x*.05+k*3)*1.6;
 /* a white pine or hemlock in screen space: tiers of soft-edged boughs, dark green, snow lying on each tier */
 function pine(c,r,x,y,h,dark,snow){
@@ -91,8 +93,15 @@ PAINT.scene({id:"p-walden",win:CUTW("walden"),s:[.16,.222],refZ:-12,
       c.fillStyle=q;c.beginPath();c.moveTo(d0[0]-200,e.H);c.lineTo(d0[0]-200,d0[1]+u*.2);for(let x=-9;x<=9;x+=.25){const p=P(x,-2+.25+.12*Math.sin(x*1.3)+.08*Math.sin(x*3.1),2.4);c.lineTo(p[0],p[1]);}c.lineTo(d1[0]+200,d1[1]+u*.2);c.lineTo(d1[0]+200,e.H);c.fill();
     }}
   ],
+  cue:"the ice to skim a stone",
+  poke(e){const p=e.P(-3+6*((e.T*7)%1),-2,-14);return this.tap(p[0],p[1],e);},
+  hot(x,y,e){return!!iceAt(x,y,e);},
+  tap(x,y,e){const t=iceAt(x,y,e);if(!t)return false;const z0=Math.min(3,e.cam.z-2.6);stones.push({x0:t[0]*.3,z0,x1:t[0]+(t[0]-t[0]*.3)*.3,z1:Math.max(SHORE+1.2,t[1]+(t[1]-z0)*.3),t0:e.T===0?-99:e.T});if(stones.length>8)stones.shift();return true;},
   live(g,e,H,i){
     const{P,T,lp}=e;
+    if(i===2)stones.forEach(s=>{const a=T-s.t0,k=1-Math.exp(-a*1.5),x=s.x0+(s.x1-s.x0)*k,z=s.z0+(s.z1-s.z0)*k,p=P(x,-2,z),u=e.u(z),q=P(s.x0,-2,s.z0),fa=Math.max(0,1-a/6);
+      if(fa>0){const lg=g.createLinearGradient(q[0],q[1],p[0],p[1]);lg.addColorStop(0,"rgba(84,90,136,0)");lg.addColorStop(1,`rgba(84,90,136,${(.4*fa).toFixed(3)})`);g.strokeStyle=lg;g.lineWidth=Math.max(1,u*.03);g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(p[0],p[1]);g.stroke();}
+      H.shadow(g,p[0]+u*.05,p[1],u*.12,u*.04,.5,"40,44,80");g.fillStyle="#3c3a40";g.beginPath();g.ellipse(p[0],p[1]-u*.025,Math.max(1.6*e.dpr,u*.07),Math.max(1.1*e.dpr,u*.04),0,0,7);g.fill();g.fillStyle="rgba(230,226,240,.5)";g.beginPath();g.ellipse(p[0]-u*.015,p[1]-u*.04,Math.max(1,u*.035),Math.max(.6,u*.015),0,0,7);g.fill();});
     if(i===1){
       /* the car on the shore road: parked facing the pond, its headlights come on and reach out across the ice */
       const on=H.sm(.55,.75,lp),p=P(...CAR),u=e.u(CAR[2]);

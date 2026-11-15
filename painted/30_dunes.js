@@ -4,6 +4,7 @@
    dust and leaves its tracks. It drives past an oasis (a pool in a hollow, date palms, camels drinking and grazing, birds over the water);
    a caravan walks a far ridge and Arabian oryx graze on a dune to the left. */
 (()=>{
+let CARP=null,rev=-9; /* touch: the car answers with a burst of throttle (brake lights, a kick, more dust) */
 const Hb=(x,z)=>-1.6+.55*Math.sin(.33*x+.2*z)+.32*Math.sin(.7*z-.3*x+1)+.12*Math.sin(1.6*x+.9*z);
 const pathX=z=>2.4*Math.sin(z*.28);
 /* the oasis: a hollow pressed into the dunes beside the track (the car passes it two thirds of the way through), holding a pool */
@@ -16,6 +17,10 @@ const L=(()=>{const v=[.25,.42,-1];const n=Math.hypot(...v);return v.map(a=>a/n)
 const lit=[246,178,98],shade=[118,52,30],far=[244,190,130];
 const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
 PAINT.scene({id:"p-dunes",win:CUTW("dunes"),s:[.485,.56],refZ:0,layers:[],
+  cue(e){return CARP&&CARP[0]>e.W*.08&&CARP[0]<e.W*.92&&CARP[1]<e.H*.8?"the car":"";},
+  hot(x,y){return!!CARP&&Math.abs(x-CARP[0])<CARP[2]*.6&&y>CARP[1]-CARP[2]*.85&&y<CARP[1]+CARP[2]*.25;},
+  tap(x,y,e){if(!this.hot(x,y))return false;rev=e.T;return true;},
+  poke(e){rev=e.T;return true;},
   /* one light: the sun low ahead over the last ridge; everything is backlit, shadows run toward us */
   look(e){const s=e.P(SUN[0],SUN[1]-1.4*e.lp,SUN[2]);return{bloom:.3,sun:[s[0]/e.W,s[1]/e.H,"255,200,130",.2,.7],grade:"rgba(255,150,90,.16)",shade:["rgba(255,255,255,1)","rgba(235,215,230,1)"],vig:.4,grain:.05};},
   sky(g,e){
@@ -170,10 +175,10 @@ const PROPS=[];
   [[-5.4,-3.6,1,0],[-4.7,-4.1,-1,1],[-6.1,-4.4,1,2]].forEach(([x,z,d,ph])=>PROPS.push({z:()=>z,draw:(g,e,H)=>oryx(g,e,H,x,z,d,ph,e.T)}));}
 /* The 4x4: a boxy body in silhouette with a sunlit roof edge, roof rack, spare wheel on the back, tail lights, a plume of dust behind. */
 function drawCar(g,e,H,z){const{P,T}=e,x=pathX(z),y=Hf(x,z)+.06,u=e.u(z),b=P(x,y,z),tilt=(Hf(x,z-.5)-Hf(x,z+.5))*.6,yaw=Math.cos(z*.28)*.3;
-  const bob=Math.sin(T*9)*u*.01;
+  const rk=Math.exp(-Math.max(0,T-rev)/.9)*(T>=rev?1:0),bob=Math.sin(T*9)*u*.01-rk*u*.05*Math.abs(Math.sin((T-rev)*9));CARP=[b[0],b[1],u];
   g.save();g.translate(b[0],b[1]+bob);g.rotate(-yaw*.25);
   /* dust behind and around the wheels */
-  for(let k=0;k<14;k++){const t=((T*.8+k/14)%1),dx=(Math.sin(k*2.1)*.4+t*.3*Math.sign(Math.sin(k)))*u,dy=-t*u*.5,rr=u*(.2+t*.9);const gr=g.createRadialGradient(dx,dy,0,dx,dy,rr);gr.addColorStop(0,`rgba(232,178,120,${(.32*(1-t)).toFixed(3)})`);gr.addColorStop(1,"rgba(232,178,120,0)");g.fillStyle=gr;g.fillRect(dx-rr,dy-rr,rr*2,rr*2);}
+  for(let k=0;k<14;k++){const t=((T*.8+k/14)%1),dx=(Math.sin(k*2.1)*.4+t*.3*Math.sign(Math.sin(k)))*u,dy=-t*u*.5,rr=u*(.2+t*.9)*(1+1.5*rk);const gr=g.createRadialGradient(dx,dy,0,dx,dy,rr);gr.addColorStop(0,`rgba(232,178,120,${Math.min(.9,.32*(1-t)*(1+1.6*rk)).toFixed(3)})`);gr.addColorStop(1,"rgba(232,178,120,0)");g.fillStyle=gr;g.fillRect(dx-rr,dy-rr,rr*2,rr*2);}
   const w=.62*u,h=.36*u;
   g.fillStyle="#2b1d17";g.fillRect(-w/2,-h,w,h*.62);                      /* lower body */
   g.fillStyle="#24180f";g.beginPath();g.moveTo(-w*.44,-h*.98);g.lineTo(-w*.4,-h*1.55);g.lineTo(w*.4,-h*1.55);g.lineTo(w*.44,-h*.98);g.fill();   /* cabin */
@@ -181,7 +186,7 @@ function drawCar(g,e,H,z){const{P,T}=e,x=pathX(z),y=Hf(x,z)+.06,u=e.u(z),b=P(x,y
   g.fillStyle="#1a110c";g.fillRect(-w*.46,-h*1.68,w*.92,h*.07);for(let k=0;k<5;k++)g.fillRect(-w*.42+k*w*.21,-h*1.68,w*.03,h*.13);   /* roof rack */
   g.strokeStyle="rgba(255,214,150,.7)";g.lineWidth=Math.max(.8,u*.02);g.beginPath();g.moveTo(-w*.46,-h*1.69);g.lineTo(w*.46,-h*1.69);g.stroke();
   g.fillStyle="#140d09";g.beginPath();g.arc(0,-h*.7,h*.26,0,7);g.fill();g.strokeStyle="rgba(255,214,150,.35)";g.beginPath();g.arc(0,-h*.7,h*.26,-1.2,.2);g.stroke();   /* spare wheel */
-  H.glow(g,"255,60,40",-w*.42,-h*.62,u*.12,.9);H.glow(g,"255,60,40",w*.42,-h*.62,u*.12,.9);
+  H.glow(g,"255,60,40",-w*.42,-h*.62,u*.12*(1+2.2*rk),.9);H.glow(g,"255,60,40",w*.42,-h*.62,u*.12*(1+2.2*rk),.9);
   g.fillStyle="rgba(60,20,8,.45)";g.beginPath();g.ellipse(0,0,w*.7,h*.12,0,0,7);g.fill();
   g.fillStyle="#0e0907";[-w*.4,w*.4].forEach(o=>{g.beginPath();g.ellipse(o,-h*.14,w*.11,h*.2,0,0,7);g.fill();});
   g.restore();}

@@ -40,9 +40,10 @@ const mix=(a,b,t)=>[0,1,2].map(i=>a[i]+(b[i]-a[i])*t);
 /* ---------- the places, in time order from the sun outward ---------- */
 export const PLANETS=[
   {id:"concord",name:"Concord",r:.21,tilt:.18,atmo:[.62,.74,.9],atmoK:1.1},
-  {id:"doha",name:"Doha",r:.26,tilt:-.1,atmo:[1,.72,.42],atmoK:.9},
-  {id:"wake-forest",name:"Wake Forest",r:.23,tilt:.3,atmo:[.55,.7,.6],atmoK:.8},
-  {id:"barcelona",name:"Barcelona",r:.24,tilt:-.22,atmo:[.95,.75,.5],atmoK:.9},
+  {id:"doha",name:"Qatar",r:.26,tilt:-.1,atmo:[1,.72,.42],atmoK:.9},
+  {id:"wake-forest",name:"North Carolina",r:.23,tilt:.3,atmo:[.55,.7,.6],atmoK:.8},
+  {id:"barcelona",name:"Spain",r:.24,tilt:-.22,atmo:[.95,.75,.5],atmoK:.9},
+  {id:"boston",name:"Boston",r:.23,tilt:.2,atmo:[.6,.66,.95],atmoK:1},
   {id:"new-york",name:"New York",r:.27,tilt:.12,atmo:[.6,.7,.9],atmoK:1},
   {id:"projects",name:"Projects",r:.2,tilt:.4,atmo:[.8,.85,.9],atmoK:.5}];
 /* each planet's surface, in the colours of its scene (painted/*.js): a function of (u,v) → colour, roughness, height, emissive */
@@ -65,6 +66,11 @@ const SURF={
     const gx=Math.abs(((u*140)%1)-.5)*2,gy=Math.abs(((v*70)%1)-.5)*2,street=clamp((Math.max(gx,gy)-.86)*7)*L*Math.sin(v*Math.PI);
     let c=mix([190,112,64],[214,140,88],f);c=mix(c,[88,60,44],street*.8);c=mix(c,[46,110,138],1-L);c=mix(c,[228,200,150],clamp(1-Math.abs(land-.42)*40)*.7);
     return{c,r:.72-(1-L)*.3,h:L*.5+f*.05-street*.3};},
+  boston(u,v){ /* the blue hour over the Charles: brick, slate roofs, the river and harbour dark blue, windows coming on */
+    const land=sph(u,v,5,4),L=clamp((land-.44)*9),f=sph(u+.3,v,30,3),blk=sph(u+.5,v+.3,54,2);
+    let c=mix([112,62,52],[150,90,70],f);c=mix(c,[60,66,84],clamp((blk-.5)*4)*.7);c=mix(c,[28,44,82],1-L);
+    const lit=L*clamp((blk-.36)*3)*(.4+.6*f);const e=[255*lit,206*lit,140*lit];
+    return{c,r:.7-(1-L)*.25,h:L*.5+blk*L*.3,e};},
   "new-york"(u,v){ /* Manhattan before sunrise: slate and glass, dark water, the grid lit by windows */
     const land=sph(u,v,4,4),L=clamp((land-.42)*9),f=sph(u+.6,v,36,3),blk=sph(u+.2,v+.8,60,2);
     const gx=Math.abs(((u*180)%1)-.5)*2,gy=Math.abs(((v*90)%1)-.5)*2,street=clamp((Math.max(gx,gy)-.8)*5)*L*Math.sin(v*Math.PI);
@@ -156,7 +162,7 @@ const atmoM=(col,k)=>new THREE.ShaderMaterial(Object.assign({},haloSh,{uniforms:
 /* ---------- the route: a gentle curve leaving the globe, places beside it in time order, Projects dead ahead at the end ---------- */
 const PTS=[[0,.12,2.5],[1.5,.45,.7],[2.6,.55,-2.6],[2.2,.35,-7.4],[3.6,.12,-12.4],[2.4,-.12,-17.4],[3.8,.08,-22.4],[3.1,.22,-27.2],[3.3,.2,-30.6]].map(p=>new THREE.Vector3(...p));
 const curve=new THREE.CatmullRomCurve3(PTS,false,"centripetal");
-const STOPS=[.17,.34,.5,.66,.82]; /* where on the route each place is passed (Concord … New York) */
+const STOPS=[.15,.29,.43,.57,.71,.85]; /* where on the route each place is passed (Concord … New York) */
 const KN=[0,...STOPS.map(x=>x-.055),1]; /* scroll knots: the camera slows just before each place, so it sits ahead in view */ /* scroll knots: the camera slows at each place */
 const _t=new THREE.Vector3(),_n=new THREE.Vector3(),UP=new THREE.Vector3(0,1,0);
 const sideOf=i=>i%2?-1:1;
@@ -178,7 +184,8 @@ const planets=PLANETS.map((P,i)=>{const g=new THREE.Group();let m;
   if(P.id==="projects"){s=1;curve.getPointAt(1,g.position);curve.getTangentAt(1,_t);g.position.addScaledVector(_t,1.55);} /* "now": straight ahead where the route ends */
   else{s=STOPS[i];curve.getPointAt(s,g.position);curve.getTangentAt(s,_t);_n.crossVectors(_t,UP).normalize();g.position.addScaledVector(_n,sideOf(i)*.95).y-=.12;}
   sys.add(g);
-  return{...P,i,m:g,spin:m,s,v:new THREE.Vector3(),seen:false,hot:0};});
+  const big=P.id==="projects"?1:1.4;g.scale.setScalar(big); /* Round 10: more room on the path, so the places are larger */
+  return{...P,r:P.r*big,i,m:g,spin:m,s,v:new THREE.Vector3(),seen:false,hot:0};});
 
 /* ---------- depth: far stars, two dust layers along the route, a few faint nebulae ---------- */
 const MID=new THREE.Vector3(2.6,0,-14);

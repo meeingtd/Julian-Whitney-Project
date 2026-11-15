@@ -3,6 +3,7 @@
    lands on (SIL.ny). Live: headlights cross the bridge, windows go on and off, a ferry crosses, and a plane blinks across the dawn, the same
    kind of light the story started with. */
 (()=>{
+let esb=0,esbT=-9;const ESB=[null,["255,70,70","255,255,255","90,130,255"],["127,214,194","127,214,194","127,214,194"],["255,176,70","255,120,60","255,176,70"]]; /* touch: the Empire State Building changes its lights */
 const LAND=[[-2.8,3.3,-1.2,"crown"],[0,4.1,-1,"empire"],[3.1,4.2,-1.2,"spire"]];
 PAINT.scene({id:"p-ny",win:CUTW("ny"),s:[.917,.958],refZ:-1,
   /* one light: dawn coming up behind us in the east, warming the faces of the towers; river mist softens Manhattan behind the bridge */
@@ -60,7 +61,12 @@ PAINT.scene({id:"p-ny",win:CUTW("ny"),s:[.917,.958],refZ:-1,
       for(let s=0;s<1;s+=.05){const p=P(tx+s*16,-.45,tz-s);PAINT.helpers.glow(c,"255,214,150",p[0],p[1],e.u(tz-s)*.18,.9);}
     }}
   ],
+  cue:"the Empire State Building",
+  poke(e){esb=(esb+1)%ESB.length;esbT=e.T;return true;},
+  hot(x,y,e){const a=e.P(-.75,5.4,-1),b=e.P(.75,-.6,-1);return x>a[0]&&x<b[0]&&y>a[1]&&y<b[1];},
+  tap(x,y,e){if(!this.hot(x,y,e))return false;esb=(esb+1)%ESB.length;esbT=e.T;return true;},
   live(g,e,H,i){const{P,T}=e;
+    if(i===1&&ESB[esb]){const k=e.T===0?1:H.clamp((T-esbT)/.35),u=e.u(-1);g.globalCompositeOperation="lighter";ESB[esb].forEach((c,j)=>{const p=P(0,3.05+j*.36,-1);H.glow(g,c,p[0],p[1],u*(.62-j*.1),.8*k);});const tp=P(0,4.5,-1);H.glow(g,ESB[esb][2],tp[0],tp[1],u*.3,.9*k);g.globalCompositeOperation="source-over";}
     if(i===0){/* windows switching as the city wakes */const r=H.rng(31);for(let k=0;k<40;k++){const x=-8+r()*16,y=-1+r()*3.5,z=-2.6-r()*2,p=P(x,y,z),on=Math.sin(T*.3+k*2.1)>.3;if(on){g.fillStyle="rgba(255,214,150,.9)";g.fillRect(p[0],p[1],e.u(z)*.06,e.u(z)*.07);}}
       /* a plane crossing the dawn, its beacon blinking */const px=((T*.04)%1.4-.2)*e.W,py=e.H*(.16-.05*((T*.04)%1.4));const bl=Math.exp(-((T%1.05))/.11);H.glow(g,"255,70,56",px,py,6*e.dpr*(.6+.4*bl),bl);H.glow(g,"255,246,230",px+6*e.dpr,py,4*e.dpr,.6);}
     if(i===1){/* gulls working over the river at first light */H.flock(g,e,6,.62,.58,.2,.03,4.5*e.dpr,"rgba(230,226,236,.75)",.7,9);}
