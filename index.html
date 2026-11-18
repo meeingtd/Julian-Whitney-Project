@@ -49,6 +49,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .talk button:hover i{transform:rotate(180deg)}
 .talk-actions{display:flex;flex-wrap:wrap;gap:10px}
 .talk-actions a{font:500 var(--t-xs) var(--f-body);color:var(--ink2);border:1px solid var(--rule);padding:6px 14px;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}
+.terms dd a{display:block;width:fit-content;margin-top:4px;padding:4px 0;color:var(--accent);text-underline-offset:3px} /* accent: actionable (play a game) */
 .talk-actions a:hover{border-color:var(--accent);color:var(--accent)}
 .talk .ln{color:var(--muted);transition:color .3s}
 .talk .ln:hover{color:var(--ink)}
@@ -119,6 +120,7 @@ dialog::backdrop{background:var(--bg)}
 .sheet h3{font:500 var(--t-xs)/1.35 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
 .vid{margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .vid video{width:auto;max-width:100%;max-height:58vh;aspect-ratio:16/10;background:#060809;border:1px solid var(--rule);display:block}
+.vid video.tall{aspect-ratio:9/16;max-height:70vh}
 .vid img{width:auto;max-width:100%;max-height:58vh;aspect-ratio:16/10;border:1px solid var(--rule);display:block}
 .vid figcaption{font-size:var(--t-xs);color:var(--muted);max-width:75ch}
 .head{display:grid;grid-template-columns:1fr 1fr;gap:20px 48px;border-top:1px solid var(--rule);padding-top:24px}
@@ -2718,6 +2720,8 @@ PAINT.scene({id:"p-ny",win:CUTW("ny"),s:[.917,.958],refZ:-1,
   <img data-p="homebase" alt="" src="media/stills/homebase-1.jpg"><img data-p="homebase" alt="" src="media/stills/homebase-2.jpg"><img data-p="homebase" alt="" src="media/stills/homebase-3.jpg">
   <img data-p="usage" alt="" src="media/stills/usage-1.jpg"><img data-p="usage" alt="" src="media/stills/usage-2.jpg"><img data-p="usage" alt="" src="media/stills/usage-3.jpg">
   <img data-p="validation" alt="" src="media/stills/validation-1.jpg"><img data-p="validation" alt="" src="media/stills/validation-2.jpg"><img data-p="validation" alt="" src="media/stills/validation-3.jpg">
+  <img data-p="motion" alt="" src="media/stills/motion-1.jpg"><img data-p="motion" alt="" src="media/stills/motion-2.jpg"><img data-p="motion" alt="" src="media/stills/motion-3.jpg">
+  <img data-p="games" alt="" src="media/stills/games-1.jpg"><img data-p="games" alt="" src="media/stills/games-2.jpg"><img data-p="games" alt="" src="media/stills/games-3.jpg">
 </div>
 
 <dialog id="d-talk" class="about" aria-labelledby="h-talk">
@@ -2815,6 +2819,11 @@ PAINT.scene({id:"p-ny",win:CUTW("ny"),s:[.917,.958],refZ:-1,
         <dl class="terms"><dt>For</dt><dd>People moving to Stamford, CT, especially the partner who moves for someone else's job</dd><dt>How it runs</dt><dd>A chief-of-staff agent and seven specialist agents: research, product, content, ops, finance, sales and QA</dd><dt>Status</dt><dd>Hackathon finalist, branch in progress; co-built with a partner</dd><dt>Built with</dt><dd>Claude Code, custom agents, a web app, Python viewers</dd></dl>
       </div>
     </div>
+    <div class="extra">
+      <h3>The agent team</h3>
+      <dl class="sched"><dt>Chief of staff</dt><dd>Catches up on the company, picks the next backlog item and hands it to the right agent</dd><dt>Research</dt><dd>Finds facts with sources: the market, competitors, Stamford data and vendor pricing</dd><dt>Product</dt><dd>Changes the prototype and runs a click-through audit after every change</dd><dt>QA</dt><dd>Tests the prototype and demo clips and reports defects; it can read but not change anything</dd><dt>Content</dt><dd>Drafts and checks the pitch, slide notes, presenter guide and product brief</dd><dt>Sales</dt><dd>Builds the employer pipeline and drafts outreach that a person sends</dd><dt>Finance</dt><dd>Checks spend against a no-spend rule and models costs</dd><dt>Ops</dt><dd>Keeps the log of decisions and open questions and flags conflicts between them</dd></dl>
+      <p class="note">Each agent lives in the project folder with its own instructions and tools, so the team only exists in sessions opened from that project.</p>
+    </div>
   </div>
 </dialog>
 
@@ -2862,6 +2871,41 @@ PAINT.scene({id:"p-ny",win:CUTW("ny"),s:[.917,.958],refZ:-1,
       </ol>
       <dl class="sched"><dt>Kill-shot first</dt><dd>On pets, three sourced questions found the fatal flaw for about 80k tokens, after mining had cost about 720k and only hinted at it, so that check now runs before any mining</dd><dt>Themes defined</dt><dd>Loose theme names caused most tagging misses, so each theme now gets a one-line definition before tagging starts</dd></dl>
       <p class="note">Complaint mining reads App Store reviews today. Reddit needs a logged-in API, so it was left out of the first run.</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="d-motion" aria-labelledby="h-ms" data-short="Motion Studio">
+  <div class="bar-d"><span class="kind mono">Video · Code-driven motion</span><button type="button" class="close mono" data-close>Close <i aria-hidden="true">×</i></button></div>
+  <div class="sheet">
+    <div>
+      <h3>The first reel</h3>
+      <figure class="vid"><video class="tall" controls preload="none" playsinline muted poster="media/stills/motion-1.jpg" src="media/motion.mp4"></video><figcaption>16 seconds, 480 frames, made entirely by the studio, soundtrack included.</figcaption></figure>
+    </div>
+    <div class="head">
+      <div><h2 id="h-ms">Motion Studio</h2><span class="when mono">Oct 2026</span></div>
+      <div class="copy-col">
+        <p class="tag">A render studio where Claude writes motion graphics as code, then grades its own frames until they pass.</p>
+        <p class="body">Claude never draws a video directly. It writes a scene in which every frame is a pure function of time, Chrome paints all 480 frames, and FFmpeg stitches them with a soundtrack the studio synthesizes on the beat. Then Claude reviews contact sheets of its own frames against a written rubric, and the reel only ships when every section scores 8 out of 10 with no dead frames.</p>
+        <dl class="terms"><dt>House rules</dt><dd>Every moving value is a spring started on a beat; a linter blocks CSS easing, timers and randomness before a render starts</dd><dt>Quality bar</dt><dd>Every section at 8/10 or better, cuts on the beat, no dead frames</dd><dt>Built with</dt><dd>Node, Playwright, FFmpeg, a small audio synthesizer, Claude Code</dd></dl>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="d-games" aria-labelledby="h-gm" data-short="the games">
+  <div class="bar-d"><span class="kind mono">Games · Browser</span><button type="button" class="close mono" data-close>Close <i aria-hidden="true">×</i></button></div>
+  <div class="sheet">
+    <div>
+      <h3>Capital Quest</h3>
+      <figure class="vid"><img alt="Capital Quest: a world map with the start panel to pick a mode, a region and the number of rounds" src="media/stills/games-1.jpg"></figure>
+    </div>
+    <div class="head">
+      <div><h2 id="h-gm">Three browser games</h2><span class="when mono">Oct 2026</span></div>
+      <div class="copy-col">
+        <p class="tag">Three small games, each a single page that runs in the browser with nothing to install.</p>
+        <dl class="terms"><dt>Capital Quest</dt><dd>Pin each country's capital on a world map or type its name, across all 195 countries or one region. <a href="games/capital-quest/" target="_blank" rel="noopener">Play Capital Quest</a></dd><dt>Sky Hopper</dt><dd>Tap or press Space to flap through the gaps. <a href="games/sky-hopper/" target="_blank" rel="noopener">Play Sky Hopper</a></dd><dt>Tank Battle</dt><dd>Two players share one keyboard, and shots bounce off a wall once. Needs a keyboard. <a href="games/tank-battle/" target="_blank" rel="noopener">Play Tank Battle</a></dd><dt>Built with</dt><dd>Claude Code, HTML and JavaScript with no build step, D3 for the map</dd></dl>
+      </div>
     </div>
   </div>
 </dialog>
@@ -5938,7 +5982,7 @@ document.querySelectorAll("button[data-copy]").forEach(b=>b.addEventListener("cl
   setTimeout(()=>b.textContent="Copy",1600);}));
 
 /* Dialogs and hash routes */
-const IDS=["hexcel","scoreboard","homebase","usage","validation"];
+const IDS=["hexcel","scoreboard","homebase","usage","validation","motion","games"];
 const dlg=id=>document.getElementById("d-"+id);
 const info=id=>{const d=dlg(id);return{kind:d.querySelector(".kind").textContent,title:d.querySelector("h2").textContent,tag:d.querySelector(".tag").textContent,short:d.dataset.short};};
 function openDialog(id){
@@ -6879,7 +6923,7 @@ const clock=new THREE.Clock();let p=0,time=0,gs=0,shown=null;
   if(!canHover)hintB.textContent="Tap a project to open";
   /* Projects on the desk (Round 11, take A): replaces the drum on screen. Five things in a row on the wood; q slides the row; each opens its dialog. */
   const DST=(()=>{const el=document.createElement("div");el.id="dstage";el.innerHTML='<canvas class="wood" aria-hidden="true"></canvas><div class="dtrack"></div>';const mo=document.getElementById("morph");mo.parentNode.insertBefore(el,mo);
-    const tr=el.querySelector(".dtrack"),Q0=.2,QD=.185,things=[];let D=1,built=false,shown=false;
+    const tr=el.querySelector(".dtrack"),Q0=.2,QD=.74/(IDS.length-1),things=[];let D=1,built=false,shown=false;
     function wood(){const c=el.querySelector(".wood"),W=c.width=1600,H=c.height=1000,g=c.getContext("2d");let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
       const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#4a301f");bg.addColorStop(.5,"#3a2417");bg.addColorStop(1,"#24150d");g.fillStyle=bg;g.fillRect(0,0,W,H);
       for(let i=0;i<1500;i++){const y=r()*H,x=r()*W,l=120+r()*700,a=.02+r()*.07,w=r()*6.3,amp=1+r()*5;g.strokeStyle=r()<.6?`rgba(18,9,4,${a})`:`rgba(214,150,100,${a*.6})`;g.lineWidth=.6+r()*1.6;g.beginPath();for(let k=0;k<=12;k++){const t=k/12;g.lineTo(x+t*l,y+Math.sin(w+t*3)*amp);}g.stroke();}
